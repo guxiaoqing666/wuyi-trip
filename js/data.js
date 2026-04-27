@@ -4,12 +4,38 @@
 
 const FAMILY = {
   members: [
-    { name: "程老师", role: "爸爸", age: 59, emoji: "👨‍🦳", color: "#4a90d9", desc: "资深领航员" },
-    { name: "都老师", role: "妈妈", age: 56, emoji: "👩‍🦳", color: "#e85d75", desc: "美食鉴赏家" },
-    { name: "小庆", role: "儿子", age: null, emoji: "👨", color: "#27ae60", desc: "首席司机🚗" },
-    { name: "香香", role: "儿媳", age: null, emoji: "👩", color: "#f39c12", desc: "拍照小能手" }
+    { name: "程老师", role: "爸爸", age: 59, emoji: "👨‍🦳", color: "#4a90d9", desc: "资深领航员", voice: "安全第一，慢慢开！" },
+    { name: "都老师", role: "妈妈", age: 56, emoji: "👩‍🦳", color: "#e85d75", desc: "美食鉴赏家", voice: "该吃饭啦，别饿着！" },
+    { name: "小庆", role: "儿子", age: null, emoji: "👨", color: "#27ae60", desc: "首席司机🚗", voice: "放心，我开车稳得很！" },
+    { name: "香香", role: "儿媳", age: null, emoji: "👩", color: "#f39c12", desc: "拍照小能手", voice: "这里好美，快帮我拍照！" }
   ]
 };
+
+// 天气数据（模拟）
+const WEATHER_DATA = {
+  "高邮": { temp: "18-26°C", icon: "☀️", mood: "阳光明媚，适合出游", clothes: "薄长袖+防晒衣" },
+  "连云港": { temp: "16-24°C", icon: "⛅", mood: "海风习习，凉爽宜人", clothes: "薄外套+长裤" },
+  "日照": { temp: "17-25°C", icon: "☀️", mood: "阳光灿烂，海边完美", clothes: "短袖+防晒+外套" },
+  "徐州": { temp: "19-28°C", icon: "☀️", mood: "温暖舒适，适合漫步", clothes: "薄长袖+休闲装" }
+};
+
+// 美食打卡清单
+const FOOD_CHECKLIST = {
+  "高邮": ["高邮阳春面", "蒲包肉", "高邮咸鸭蛋", "界首茶干"],
+  "连云港": ["海鲜面", "清蒸海鱼", "蒜蓉扇贝", "凉粉"],
+  "日照": ["海鲜水饺", "鲅鱼饺子", "小海鲜拼盘", "海沙子面"],
+  "徐州": ["地锅鸡", "烙馍卷馓子", "蛙鱼", "sha汤", "蜜三刀", "徐州烧烤"]
+};
+
+// 家庭群聊消息
+const CHAT_MESSAGES = [
+  { sender: "都老师", emoji: "👩‍🦳", text: "早上好！今天几点出发呀？", time: "07:00" },
+  { sender: "小庆", emoji: "👨", text: "程老师，导航已就绪，准备出发！", time: "07:30" },
+  { sender: "程老师", emoji: "👨‍🦳", text: "好，我检查一下车况", time: "07:35" },
+  { sender: "香香", emoji: "👩", text: "我带了零食和充电宝~", time: "07:40" },
+  { sender: "都老师", emoji: "👩‍🦳", text: "记得给我拍美照哦", time: "07:45" },
+  { sender: "小庆", emoji: "👨", text: "出发！🚗💨", time: "08:00" }
+];
 
 const TRIP_DATA = {
   title: "🚗 小庆一家五一自驾游",

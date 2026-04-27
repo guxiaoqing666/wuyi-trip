@@ -1,0 +1,572 @@
+/* ============================================
+   创意功能样式
+   ============================================ */
+
+/* ---- 1. 天气心情卡片 ---- */
+.weather-card {
+  margin: 0 16px 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #74b9ff, #0984e3);
+  border-radius: var(--radius-md);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+  animation: fadeInUp 0.5s ease;
+}
+
+.weather-icon {
+  font-size: 36px;
+  line-height: 1;
+}
+
+.weather-info {
+  flex: 1;
+}
+
+.weather-temp {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.weather-mood {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+.weather-clothes {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+/* ---- 2. 倒计时/正计时 ---- */
+.countdown-banner {
+  margin: 0 16px 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fd79a8, #e84393);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  color: white;
+  box-shadow: var(--shadow-md);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.countdown-label {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.countdown-value {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.countdown-unit {
+  font-size: 14px;
+}
+
+/* ---- 3. 照片占位框 ---- */
+.photo-frame {
+  margin: 12px 16px;
+  padding: 16px;
+  background: #fafafa;
+  border: 2px dashed #ddd;
+  border-radius: var(--radius-md);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.photo-frame::before {
+  content: '📷';
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.photo-frame-text {
+  font-size: 13px;
+  color: #999;
+}
+
+.photo-frame-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+}
+
+.photo-frame-corner.tl { top: 4px; left: 4px; border-right: none; border-bottom: none; }
+.photo-frame-corner.tr { top: 4px; right: 4px; border-left: none; border-bottom: none; }
+.photo-frame-corner.bl { bottom: 4px; left: 4px; border-right: none; border-top: none; }
+.photo-frame-corner.br { bottom: 4px; right: 4px; border-left: none; border-top: none; }
+
+/* ---- 4. 里程加油站 ---- */
+.gas-station {
+  margin: 0 16px 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #00b894, #00cec9);
+  border-radius: var(--radius-lg);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.gas-station-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.gas-station-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.gas-station-value {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.gas-station-bar {
+  height: 10px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.gas-station-fill {
+  height: 100%;
+  background: white;
+  border-radius: 5px;
+  transition: width 1s ease;
+  position: relative;
+}
+
+.gas-station-fill::after {
+  content: '⛽';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+}
+
+/* ---- 5. 美食打卡清单 ---- */
+.food-checklist {
+  margin: 12px 16px;
+  padding: 14px 16px;
+  background: #fffbf0;
+  border-radius: var(--radius-md);
+  border-left: 3px solid #f39c12;
+}
+
+.food-checklist-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.food-check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.food-check-item:hover {
+  background: rgba(243, 156, 18, 0.1);
+  border-radius: 6px;
+  padding-left: 8px;
+}
+
+.food-check-box {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.food-check-item.checked .food-check-box {
+  background: #27ae60;
+  border-color: #27ae60;
+  color: white;
+}
+
+.food-check-item.checked .food-check-text {
+  text-decoration: line-through;
+  color: #999;
+}
+
+/* ---- 6. 家庭投票 ---- */
+.family-vote {
+  margin: 12px 16px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  border-radius: var(--radius-md);
+}
+
+.family-vote-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #2e7d32;
+}
+
+.vote-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vote-btn {
+  padding: 6px 14px;
+  border: 2px solid #4caf50;
+  background: white;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.vote-btn:hover {
+  background: #4caf50;
+  color: white;
+}
+
+.vote-btn.voted {
+  background: #4caf50;
+  color: white;
+}
+
+/* ---- 7. 语音留言气泡 ---- */
+.voice-bubbles {
+  margin: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.voice-bubble {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 85%;
+  animation: fadeInUp 0.4s ease;
+}
+
+.voice-bubble.self {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.voice-bubble-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: white;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.voice-bubble-content {
+  background: white;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--shadow-sm);
+  font-size: 13px;
+  line-height: 1.5;
+  position: relative;
+}
+
+.voice-bubble.self .voice-bubble-content {
+  background: #dcf8c6;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 4px;
+}
+
+.voice-bubble-name {
+  font-size: 11px;
+  color: var(--color-text-light);
+  margin-bottom: 2px;
+}
+
+.voice-bubble-text {
+  color: var(--color-text);
+}
+
+.voice-bubble-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* ---- 8. 旅行手账风格 ---- */
+.diary-page {
+  background: #fefefe;
+  background-image: 
+    linear-gradient(#e8e8e8 1px, transparent 1px),
+    linear-gradient(90deg, #e8e8e8 1px, transparent 1px);
+  background-size: 20px 20px;
+  position: relative;
+}
+
+.diary-tape {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  padding: 4px 20px;
+  background: rgba(255, 200, 100, 0.6);
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+}
+
+.diary-sticker {
+  position: absolute;
+  font-size: 24px;
+  opacity: 0.8;
+}
+
+/* ---- 10. 到达动画 ---- */
+.arrival-celebration {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  display: none;
+}
+
+.arrival-celebration.active {
+  display: block;
+}
+
+.confetti {
+  position: absolute;
+  font-size: 20px;
+  animation: confettiFall 3s ease-out forwards;
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+.arrival-banner {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 16px 32px;
+  border-radius: var(--radius-lg);
+  font-size: 20px;
+  font-weight: 700;
+  box-shadow: var(--shadow-lg);
+  animation: arrivalPop 0.6s ease forwards 0.3s;
+}
+
+@keyframes arrivalPop {
+  0% { transform: translateX(-50%) scale(0); }
+  50% { transform: translateX(-50%) scale(1.1); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* ---- 11. 家庭群聊模拟 ---- */
+.chat-container {
+  margin: 12px 16px;
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: var(--radius-md);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.chat-header {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.chat-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  animation: fadeInUp 0.3s ease;
+}
+
+.chat-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: white;
+  flex-shrink: 0;
+}
+
+.chat-content {
+  background: white;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border-top-left-radius: 2px;
+  font-size: 13px;
+  max-width: 75%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.chat-name {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.chat-text {
+  color: #333;
+  line-height: 1.4;
+}
+
+.chat-time {
+  font-size: 10px;
+  color: #bbb;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* ---- 13. 步数/活跃度 ---- */
+.activity-tracker {
+  margin: 12px 16px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+  border-radius: var(--radius-md);
+  color: white;
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+}
+
+.activity-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.activity-icon {
+  font-size: 24px;
+}
+
+.activity-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.activity-label {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+/* ---- 14. 背景音乐按钮 ---- */
+.music-btn {
+  position: fixed;
+  bottom: 140px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fd79a8, #e84393);
+  color: white;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+.music-btn:hover {
+  transform: scale(1.1);
+}
+
+.music-btn.playing {
+  animation: musicPulse 1s ease-in-out infinite;
+}
+
+@keyframes musicPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* ---- 15. 返程倒计时 ---- */
+.home-countdown {
+  margin: 0 16px 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fdcb6e, #e17055);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.home-countdown-emoji {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.home-countdown-text {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.home-countdown-sub {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.home-countdown-distance {
+  font-size: 28px;
+  font-weight: 800;
+  margin-top: 8px;
+}

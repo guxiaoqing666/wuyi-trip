@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#667eea">
   <title>🚗 五一自驾游行程</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/extras.css">
   <!-- 高德地图 JS API -->
   <script src="https://webapi.amap.com/maps?v=1.4.15&key=6a00aea5607e3e7bec6c21b35b2aecbb"></script>
 </head>
@@ -41,6 +42,12 @@
     </div>
   </header>
 
+  <!-- 2. 倒计时/正计时 -->
+  <div class="countdown-banner" id="countdown-banner">
+    <div class="countdown-label">🎯 距离五一出发还有</div>
+    <div class="countdown-value"><span id="countdown-days">--</span><span class="countdown-unit"> 天</span></div>
+  </div>
+
   <!-- 温馨欢迎语 -->
   <div class="welcome-banner">
     🌸 一家四口，五一小长假，出发啦！🌸
@@ -52,6 +59,12 @@
   <!-- 家庭合影框 -->
   <div class="family-photo-frame">
     <div class="family-photo-text">「 程老师 & 都老师 & 小庆 & 香香 」<br>📍 2025五一 · 山东江苏游</div>
+  </div>
+
+  <!-- 11. 家庭群聊预览 -->
+  <div class="chat-container" id="chat-preview">
+    <div class="chat-header">💬 家庭群聊 (4)</div>
+    <div id="chat-messages"></div>
   </div>
 
   <!-- 行程进度 -->
@@ -212,6 +225,13 @@
           </button>
         `;
         
+        // 获取城市名用于天气和美食
+        const cityNames = ['高邮', '连云港', '日照', '徐州', '徐州'];
+        const currentCity = cityNames[dayIndex] || '';
+        const weatherHtml = renderWeather(dayIndex, currentCity);
+        const foodHtml = renderFoodChecklist(currentCity);
+        const photoHtml = renderPhotoFrame(`${currentCity} · ${day.theme}`);
+        
         // 组装卡片
         const cardHtml = `
           <article class="day-card" id="day-${dayIndex}">
@@ -229,9 +249,12 @@
                 <span>⏱️ ${day.driveTime}</span>
               </div>
             </div>
+            ${weatherHtml}
             <div class="timeline">
               ${timelineHtml}
             </div>
+            ${photoHtml}
+            ${foodHtml}
             ${hotelHtml}
             ${dayMapHtml}
           </article>
@@ -381,8 +404,165 @@
       });
     }
     
+    // 渲染倒计时
+    function renderCountdown() {
+      const banner = document.getElementById('countdown-banner');
+      if (!banner) return;
+      
+      const now = new Date();
+      const tripStart = new Date('2025-05-01T07:00:00');
+      const tripEnd = new Date('2025-05-05T14:00:00');
+      
+      let label, value;
+      
+      if (now < tripStart) {
+        // 出发前倒计时
+        const diff = Math.ceil((tripStart - now) / (1000 * 60 * 60 * 24));
+        label = '🎯 距离五一出发还有';
+        value = diff;
+      } else if (now >= tripStart && now <= tripEnd) {
+        // 旅行中
+        const dayNum = Math.floor((now - tripStart) / (1000 * 60 * 60 * 24)) + 1;
+        label = `🌟 正在旅行中 · 第 ${dayNum} 天`;
+        value = 'Enjoy';
+        banner.style.background = 'linear-gradient(135deg, #00b894, #00cec9)';
+      } else {
+        // 旅行结束
+        const diff = Math.floor((now - tripEnd) / (1000 * 60 * 60 * 24));
+        label = '💝 美好回忆已保存';
+        value = diff + ' 天';
+        banner.style.background = 'linear-gradient(135deg, #fd79a8, #e84393)';
+      }
+      
+      banner.querySelector('.countdown-label').textContent = label;
+      banner.querySelector('#countdown-days').textContent = value;
+    }
+    
+    // 渲染群聊消息
+    function renderChat() {
+      const container = document.getElementById('chat-messages');
+      if (!container || !window.CHAT_MESSAGES) return;
+      
+      container.innerHTML = CHAT_MESSAGES.map(msg => `
+        <div class="chat-message">
+          <div class="chat-avatar">${msg.emoji}</div>
+          <div class="chat-content">
+            <div class="chat-name">${msg.sender}</div>
+            <div class="chat-text">${msg.text}</div>
+            <div class="chat-time">${msg.time}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // 渲染天气卡片
+    function renderWeather(dayIndex, cityName) {
+      if (!window.WEATHER_DATA || !WEATHER_DATA[cityName]) return '';
+      const w = WEATHER_DATA[cityName];
+      return `
+        <div class="weather-card">
+          <div class="weather-icon">${w.icon}</div>
+          <div class="weather-info">
+            <div class="weather-temp">${cityName} · ${w.temp}</div>
+            <div class="weather-mood">${w.mood}</div>
+            <div class="weather-clothes">👔 建议: ${w.clothes}</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // 渲染美食打卡
+    function renderFoodChecklist(cityName) {
+      if (!window.FOOD_CHECKLIST || !FOOD_CHECKLIST[cityName]) return '';
+      const foods = FOOD_CHECKLIST[cityName];
+      return `
+        <div class="food-checklist">
+          <div class="food-checklist-title">🍜 ${cityName}美食打卡</div>
+          ${foods.map(f => `
+            <div class="food-check-item" onclick="this.classList.toggle('checked')">
+              <div class="food-check-box"></div>
+              <div class="food-check-text">${f}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+    
+    // 渲染照片占位框
+    function renderPhotoFrame(text) {
+      return `
+        <div class="photo-frame">
+          <div class="photo-frame-corner tl"></div>
+          <div class="photo-frame-corner tr"></div>
+          <div class="photo-frame-corner bl"></div>
+          <div class="photo-frame-corner br"></div>
+          <div class="photo-frame-text">📷 ${text}<br><small>旅行后上传照片</small></div>
+        </div>
+      `;
+    }
+    
+    // 渲染里程加油站
+    function renderGasStation(currentKm, totalKm) {
+      const pct = Math.round((currentKm / totalKm) * 100);
+      return `
+        <div class="gas-station">
+          <div class="gas-station-header">
+            <div class="gas-station-title">⛽ 里程加油站</div>
+            <div class="gas-station-value">${currentKm}/${totalKm}km</div>
+          </div>
+          <div class="gas-station-bar">
+            <div class="gas-station-fill" style="width: ${pct}%"></div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // 渲染语音气泡
+    function renderVoiceBubbles() {
+      if (!window.FAMILY) return '';
+      return `
+        <div class="voice-bubbles">
+          ${FAMILY.members.map(m => `
+            <div class="voice-bubble ${m.name === '小庆' ? 'self' : ''}">
+              <div class="voice-bubble-avatar">${m.emoji}</div>
+              <div class="voice-bubble-content">
+                <div class="voice-bubble-name">${m.name}</div>
+                <div class="voice-bubble-text">${m.voice}</div>
+                <div class="voice-bubble-play">▶️ 播放语音</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+    
+    // 渲染活动追踪
+    function renderActivityTracker() {
+      return `
+        <div class="activity-tracker">
+          <div class="activity-item">
+            <div class="activity-icon">👣</div>
+            <div class="activity-value" id="step-count">8,520</div>
+            <div class="activity-label">今日步数</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon">📸</div>
+            <div class="activity-value" id="photo-count">42</div>
+            <div class="activity-label">香香拍照</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-icon">⏱️</div>
+            <div class="activity-value" id="drive-time">3.5h</div>
+            <div class="activity-label">程老师驾驶</div>
+          </div>
+        </div>
+      `;
+    }
+    
     document.addEventListener('DOMContentLoaded', () => {
+      renderCountdown();
       renderFamily();
+      renderChat();
       renderTrip();
       addFamilyTips();
       renderTips();
