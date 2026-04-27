@@ -7,7 +7,7 @@ const FAMILY = {
     { name: "程老师", role: "爸爸", age: 59, emoji: "👨‍🦳", color: "#4a90d9", desc: "资深领航员", voice: "安全第一，慢慢开！" },
     { name: "都老师", role: "妈妈", age: 56, emoji: "👩‍🦳", color: "#e85d75", desc: "美食鉴赏家", voice: "该吃饭啦，别饿着！" },
     { name: "小庆", role: "儿子", age: null, emoji: "👨", color: "#27ae60", desc: "首席司机🚗", voice: "放心，我开车稳得很！" },
-    { name: "香香", role: "儿媳", age: null, emoji: "👩", color: "#f39c12", desc: "拍照小能手", voice: "这里好美，快帮我拍照！" }
+    { name: "香香", role: "儿媳", age: null, emoji: "👩", color: "#f39c12", desc: "替补司机📸", voice: "这里好美，快帮我拍照！" }
   ]
 };
 
@@ -50,7 +50,7 @@ const TRIP_DATA = {
     {
       day: 1,
       date: "5月1日",
-      weekday: "周四",
+      weekday: "周五",
       theme: "高邮快闪 → 连云港海边",
       themeColor: "#e74c3c",
       route: "龙川时代 → 高邮 → 连云港连岛",
@@ -71,8 +71,8 @@ const TRIP_DATA = {
         },
         {
           time: "07:00",
-          title: "正式出发",
-          desc: "导航：华地伟星龙川时代 → 高邮南门大街",
+          title: "正式出发（小庆驾驶）",
+          desc: "小庆驾驶，程老师副驾导航。华地伟星龙川时代 → 高邮南门大街",
           icon: "🚗",
           type: "drive",
           nav: {
@@ -116,8 +116,8 @@ const TRIP_DATA = {
         },
         {
           time: "11:40",
-          title: "出发连云港",
-          desc: "导航：高邮 → 连云港连岛大沙湾",
+          title: "出发连云港（小庆继续）",
+          desc: "小庆继续驾驶，香香可以在服务区换班。高邮 → 连云港连岛大沙湾",
           icon: "🚗",
           type: "drive",
           nav: {
@@ -173,7 +173,7 @@ const TRIP_DATA = {
     {
       day: 2,
       date: "5月2日",
-      weekday: "周五",
+      weekday: "周六",
       theme: "连云港全天深度 · 山海结合",
       themeColor: "#3498db",
       route: "连岛 → 海上云台山 → 墟沟",
@@ -264,7 +264,7 @@ const TRIP_DATA = {
     {
       day: 3,
       date: "5月3日",
-      weekday: "周六",
+      weekday: "周日",
       theme: "连云港 → 日照 · 海岸休闲",
       themeColor: "#f39c12",
       route: "连云港 → 日照万平口 → 灯塔 → 东夷小镇",
@@ -368,7 +368,7 @@ const TRIP_DATA = {
     {
       day: 4,
       date: "5月4日",
-      weekday: "周日",
+      weekday: "周一",
       theme: "日照 → 徐州 · 深度慢玩",
       themeColor: "#9b59b6",
       route: "日照 → 徐州市区 → 云龙湖 → 富国街",
@@ -389,8 +389,8 @@ const TRIP_DATA = {
         },
         {
           time: "07:40",
-          title: "出发徐州",
-          desc: "导航：日照 → 徐州云龙湖",
+          title: "出发徐州（小庆驾驶）",
+          desc: "小庆驾驶，今天路程最长，香香随时替补。日照 → 徐州云龙湖",
           icon: "🚗",
           type: "drive",
           nav: {
@@ -464,7 +464,7 @@ const TRIP_DATA = {
     {
       day: 5,
       date: "5月5日",
-      weekday: "周一",
+      weekday: "周二",
       theme: "徐州半日 → 返程",
       themeColor: "#27ae60",
       route: "徐州 → 回龙窝/户部山 → 合肥龙川时代",
@@ -493,8 +493,8 @@ const TRIP_DATA = {
         },
         {
           time: "10:00",
-          title: "正式返程",
-          desc: "导航：徐州 → 华地伟星龙川时代。路线：连霍高速 → 合肥绕城 → 金寨南路",
+          title: "正式返程（小庆+香香轮换）",
+          desc: "小庆主开前半程，香香替补后半程。徐州 → 华地伟星龙川时代。路线：连霍高速 → 合肥绕城 → 金寨南路",
           icon: "🚗",
           type: "drive",
           nav: {
@@ -515,7 +515,7 @@ const TRIP_DATA = {
   ],
   tips: {
     packing: ["身份证/驾驶证", "防晒霜+墨镜", "薄长袖+防晒衣", "海边外套（风大）", "沙滩鞋", "充电宝", "车载充电器", "零食饮料"],
-    driving: ["每天上午早出发，避开10点后拥堵", "高速服务区提前加油", "连霍高速蚌埠-合肥段易堵，预留缓冲", "备用路线：宁洛高速"],
+    driving: ["每天上午早出发，避开10点后拥堵", "高速服务区提前加油", "连霍高速蚌埠-合肥段易堵，预留缓冲", "备用路线：宁洛高速", "小庆主要开车，香香偶尔替补", "每2小时服务区休息，换人换手"],
     food: ["高邮咸鸭蛋可打包", "徐州蜜三刀买特产", "海鲜干货日照可买"]
   }
 };

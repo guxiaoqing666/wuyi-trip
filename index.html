@@ -9,6 +9,7 @@
   <title>🚗 五一自驾游行程</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/extras.css">
+  <link rel="stylesheet" href="css/features.css">
   <!-- 高德地图 JS API -->
   <script src="https://webapi.amap.com/maps?v=1.4.15&key=6a00aea5607e3e7bec6c21b35b2aecbb"></script>
 </head>
@@ -52,7 +53,7 @@
 
   <!-- 家庭合影框 -->
   <div class="family-photo-frame">
-    <div class="family-photo-text">「 程老师 & 都老师 & 小庆 & 香香 」<br>📍 2025五一 · 山东江苏游</div>
+    <div class="family-photo-text">「 程老师 & 都老师 & 小庆 & 香香 」<br>📍 2026五一 · 山东江苏游</div>
   </div>
 
   <!-- 行程进度 -->
@@ -116,11 +117,24 @@
   <!-- 10. 到达动画容器 -->
   <div class="arrival-celebration" id="arrivalCelebration"></div>
 
+  <!-- 8. 旅行弹幕 -->
+  <div class="danmu-container" id="danmuContainer"></div>
+  <div class="danmu-input-bar">
+    <input type="text" id="danmuInput" placeholder="发一条弹幕..." maxlength="20">
+    <button onclick="sendDanmu()">发送</button>
+  </div>
+
+  <!-- 11. 旅行天气预报员 -->
+  <section id="weather-news-section" style="margin: 0 16px 16px;"></section>
+
   <!-- 行程内容容器 -->
   <main id="trip-content"></main>
 
-  <!-- 15. 返程倒计时 (Day5专用) -->
-  <section id="home-countdown-section"></section>
+  <!-- 14. 旅行契约 -->
+  <section id="contract-section" style="margin: 0 16px 20px;"></section>
+
+  <!-- 15. 返程礼物清单 -->
+  <section id="gift-section" style="margin: 0 16px 20px;"></section>
 
   <!-- 底部实用信息 -->
   <section class="bottom-section">
@@ -153,6 +167,10 @@
   <!-- 脚本 -->
   <script src="js/data.js"></script>
   <script src="js/nav.js"></script>
+  <script src="js/diary.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/tts.js"></script>
+  <script src="js/poster.js"></script>
   <script>
     // ============================================
     // 渲染行程内容
@@ -400,7 +418,7 @@
       { emoji: '🚗', text: '小庆司机首日出征！程老师在副驾指点江山~' },
       { emoji: '👩‍🦳', text: '都老师负责监督大家按时吃饭，健康饮食！' },
       { emoji: '📸', text: '香香多拍美照，记录一家人的快乐时光！' },
-      { emoji: '👩', text: '小香偶尔换手，让小庆休息休息~' },
+      { emoji: '👩', text: '香香偶尔换手，让小庆休息休息~' },
       { emoji: '👨‍👩‍👧‍👦', text: '小庆一路平安开回家，全家给你点赞！' }
     ];
     
@@ -433,8 +451,8 @@
       if (!banner) return;
       
       const now = new Date();
-      const tripStart = new Date('2025-05-01T07:00:00');
-      const tripEnd = new Date('2025-05-05T14:00:00');
+      const tripStart = new Date('2026-05-01T07:00:00');
+      const tripEnd = new Date('2026-05-05T14:00:00');
       
       let label, value;
       
@@ -576,7 +594,7 @@
           <div class="activity-item">
             <div class="activity-icon">⏱️</div>
             <div class="activity-value" id="drive-time">3.5h</div>
-            <div class="activity-label">程老师驾驶</div>
+            <div class="activity-label">小庆驾驶</div>
           </div>
         </div>
       `;
@@ -604,7 +622,7 @@
       if (!container) return;
       
       const now = new Date();
-      const tripEnd = new Date('2025-05-05T14:00:00');
+      const tripEnd = new Date('2026-05-05T14:00:00');
       
       if (now >= tripEnd) {
         container.innerHTML = `
@@ -614,7 +632,7 @@
             <div class="home-countdown-sub">都老师准备好晚饭啦~</div>
           </div>
         `;
-      } else if (now >= new Date('2025-05-05T08:00:00')) {
+      } else if (now >= new Date('2026-05-05T08:00:00')) {
         const hoursLeft = Math.ceil((tripEnd - now) / (1000 * 60 * 60));
         container.innerHTML = `
           <div class="home-countdown">
@@ -627,8 +645,166 @@
       }
     }
     
+    // 渲染弹幕
+    function initDanmu() {
+      const container = document.getElementById('danmuContainer');
+      if (!container) return;
+      
+      const defaultDanmus = [
+        '小庆开车稳！🚗',
+        '都老师今天吃什么？🍜',
+        '香香拍照好看！📸',
+        '小庆导航别带错路😄',
+        '海边风好大💨',
+        '咸鸭蛋真香🥚',
+        '程老师注意休息⛽',
+        '都老师买特产啦🎁',
+        '小庆开车辛苦了💪',
+        '香香替换让小庆歇会儿👍',
+        '小庆主要开车，安全第一！',
+        '程老师导航别带错路😄'
+      ];
+      
+      let index = 0;
+      setInterval(() => {
+        const danmu = document.createElement('div');
+        danmu.className = 'danmu-item';
+        danmu.textContent = defaultDanmus[index % defaultDanmus.length];
+        danmu.style.top = Math.random() * 80 + 'px';
+        container.appendChild(danmu);
+        
+        setTimeout(() => danmu.remove(), 8000);
+        index++;
+      }, 2500);
+    }
+    
+    function sendDanmu() {
+      const input = document.getElementById('danmuInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      const container = document.getElementById('danmuContainer');
+      const danmu = document.createElement('div');
+      danmu.className = 'danmu-item';
+      danmu.textContent = text;
+      danmu.style.top = Math.random() * 80 + 'px';
+      danmu.style.color = '#e74c3c';
+      container.appendChild(danmu);
+      
+      setTimeout(() => danmu.remove(), 8000);
+      input.value = '';
+    }
+    
+    // 渲染天气预报员
+    function renderWeatherNews() {
+      const container = document.getElementById('weather-news-section');
+      if (!container) return;
+      
+      container.innerHTML = `
+        <div class="weather-news">
+          <div class="weather-news-header">
+            <div class="weather-news-dot"></div>
+            <div class="weather-news-title">📺 五一旅行天气预报</div>
+          </div>
+          <div class="weather-news-anchor">
+            <div class="weather-news-avatar">👨‍🦳</div>
+            <div class="weather-news-content">
+              <div class="weather-news-name">程老师</div>
+              <div class="weather-news-role">首席气象播报员</div>
+            </div>
+          </div>
+          <div class="weather-news-forecast">
+            📍 高邮：晴 18-26°C · 连云港：多云 16-24°C<br>
+            📍 日照：晴 17-25°C · 徐州：晴 19-28°C<br>
+            <small>🎤 "我是程老师，接下来为大家播报五一期间天气..."</small>
+          </div>
+        </div>
+      `;
+    }
+    
+    // 渲染旅行契约
+    function renderContract() {
+      const container = document.getElementById('contract-section');
+      if (!container) return;
+      
+      container.innerHTML = `
+        <div class="travel-contract">
+          <div class="travel-contract-title">📜 五一旅行家庭契约</div>
+          <div class="travel-contract-item">
+            <div class="travel-contract-check">✓</div>
+            <div>不迟到，准时出发</div>
+          </div>
+          <div class="travel-contract-item">
+            <div class="travel-contract-check">✓</div>
+            <div>不挑食，都老师选啥吃啥</div>
+          </div>
+          <div class="travel-contract-item">
+            <div class="travel-contract-check">✓</div>
+            <div>不吵架，开心旅行</div>
+          </div>
+          <div class="travel-contract-item">
+            <div class="travel-contract-check">✓</div>
+            <div>小庆主要开车，香香偶尔替补</div>
+          </div>
+          <div class="travel-contract-item">
+            <div class="travel-contract-check">✓</div>
+            <div>香香负责拍照，每天至少50张</div>
+          </div>
+          <div class="travel-contract-signatures">
+            <div class="travel-contract-sig">
+              <div class="travel-contract-sig-emoji">👨‍🦳</div>
+              <div class="travel-contract-sig-name">程老师</div>
+            </div>
+            <div class="travel-contract-sig">
+              <div class="travel-contract-sig-emoji">👩‍🦳</div>
+              <div class="travel-contract-sig-name">都老师</div>
+            </div>
+            <div class="travel-contract-sig">
+              <div class="travel-contract-sig-emoji">👨</div>
+              <div class="travel-contract-sig-name">小庆</div>
+            </div>
+            <div class="travel-contract-sig">
+              <div class="travel-contract-sig-emoji">👩</div>
+              <div class="travel-contract-sig-name">香香</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // 渲染礼物清单
+    function renderGiftList() {
+      const container = document.getElementById('gift-section');
+      if (!container) return;
+      
+      const gifts = [
+        { name: '高邮咸鸭蛋', for: '都老师闺蜜', emoji: '🥚' },
+        { name: '连云港海鲜干货', for: '程老师同事', emoji: '🦐' },
+        { name: '日照绿茶', for: '亲戚长辈', emoji: '🍵' },
+        { name: '徐州蜜三刀', for: '邻居好友', emoji: '🍬' },
+        { name: '香香拍的照片', for: '朋友圈', emoji: '📸' }
+      ];
+      
+      container.innerHTML = `
+        <div class="gift-list">
+          <div class="gift-list-title">🎁 返程礼物清单</div>
+          ${gifts.map(g => `
+            <div class="gift-item">
+              <div class="gift-checkbox" onclick="this.classList.toggle('checked')">${g.emoji}</div>
+              <div>${g.name}</div>
+              <div class="gift-for">给${g.for}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+    
     document.addEventListener('DOMContentLoaded', () => {
       renderFamily();
+      renderWeatherNews();
+      renderContract();
+      renderGiftList();
+      initDanmu();
       renderTrip();
       addFamilyTips();
       renderTips();
