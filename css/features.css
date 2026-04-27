@@ -1,541 +1,502 @@
 /* ============================================
-   新功能样式：日记、智能进度、TTS、海报
+   新功能样式
    ============================================ */
 
-/* ============================================
-   1. 旅行日记
-   ============================================ */
-
-.diary-area {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--color-border);
+/* ---- 2. 旅行时光轴 ---- */
+.timeline-horizontal {
+  margin: 0 16px 20px;
+  padding: 20px 16px;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.diary-entries {
+.timeline-horizontal::-webkit-scrollbar {
+  display: none;
+}
+
+.timeline-h-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.timeline-h-track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: max-content;
+  padding: 0 8px;
+}
+
+.timeline-h-node {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.diary-entry {
-  background: #fafbfc;
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  font-size: 13px;
-  animation: fadeInUp 0.3s ease;
-  position: relative;
-}
-
-.diary-entry-header {
-  display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
-}
-
-.diary-entry-mood {
-  font-size: 16px;
-}
-
-.diary-entry-time {
-  font-size: 11px;
-  color: var(--color-text-light);
-  flex: 1;
-}
-
-.diary-entry-delete {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: none;
-  background: #ffebee;
-  color: #e74c3c;
-  font-size: 14px;
-  line-height: 1;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s;
+  transition: all 0.3s;
+  padding: 8px;
 }
 
-.diary-entry:hover .diary-entry-delete {
-  opacity: 1;
-}
-
-.diary-entry-text {
-  color: var(--color-text);
-  line-height: 1.5;
-  word-break: break-word;
-}
-
-.diary-add-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 12px;
-  border: 1px dashed #ccc;
-  background: transparent;
-  color: var(--color-text-light);
-  font-size: 12px;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.diary-add-btn:hover {
-  border-color: #667eea;
-  color: #667eea;
-  background: rgba(102, 126, 234, 0.05);
-}
-
-.diary-editor {
-  margin-top: 8px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: var(--radius-sm);
-  animation: fadeInUp 0.2s ease;
-}
-
-.diary-mood-picker {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-.diary-mood-option {
-  font-size: 22px;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 8px;
-  transition: var(--transition);
-  opacity: 0.6;
-}
-
-.diary-mood-option:hover {
-  opacity: 1;
-  transform: scale(1.2);
-  background: rgba(102, 126, 234, 0.1);
-}
-
-.diary-mood-option.picked {
-  opacity: 1;
-  background: rgba(102, 126, 234, 0.2);
-  transform: scale(1.15);
-}
-
-.diary-textarea {
-  width: 100%;
-  min-height: 60px;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-family: inherit;
-  resize: vertical;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.diary-textarea:focus {
-  border-color: #667eea;
-}
-
-.diary-editor-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  justify-content: flex-end;
-}
-
-.diary-btn {
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.diary-btn-cancel {
-  background: var(--color-bg);
-  color: var(--color-text);
-}
-
-.diary-btn-save {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-}
-
-.diary-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-}
-
-.diary-toast {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.9);
-  background: rgba(0, 0, 0, 0.75);
-  color: white;
-  padding: 14px 28px;
-  border-radius: var(--radius-lg);
-  font-size: 15px;
-  font-weight: 600;
-  z-index: 10001;
-  opacity: 0;
-  transition: all 0.3s ease;
-  pointer-events: none;
-}
-
-.diary-toast.show {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-/* ============================================
-   2. 智能行程进度高亮
-   ============================================ */
-
-/* 当前日期卡片 */
-.day-card.current-day {
-  box-shadow: 0 0 0 3px #667eea, var(--shadow-md);
-  animation: currentDayPulse 2s ease-in-out infinite;
-}
-
-@keyframes currentDayPulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4), var(--shadow-md); }
-  50% { box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.15), var(--shadow-md); }
-}
-
-/* 已完成的日期（淡入效果） */
-.day-card.past-day .day-header {
-  opacity: 0.7;
-}
-
-.day-card.past-day .timeline::before {
-  background: linear-gradient(to bottom, #27ae60, #27ae60);
-}
-
-/* 当前进行中的节点 */
-.timeline-item.current-node {
-  animation: currentNodeGlow 1.5s ease-in-out infinite;
-}
-
-.timeline-item.current-node .timeline-icon {
-  border-color: #667eea;
-  background: #e8eaf6;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
-}
-
-.timeline-item.current-node .timeline-title::before {
-  content: '▶️ ';
-}
-
-@keyframes currentNodeGlow {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(3px); }
-}
-
-/* 已完成的节点 */
-.timeline-item.past-node .timeline-icon {
-  border-color: #27ae60;
-  background: #e8f5e9;
-}
-
-.timeline-item.past-node .timeline-icon::after {
-  content: '✓';
-  position: absolute;
-  font-size: 14px;
-  color: #27ae60;
-  font-weight: bold;
-}
-
-.timeline-item.past-node .timeline-title {
-  color: #999;
-  text-decoration: line-through;
-}
-
-/* 实时指示器 */
-.live-indicator {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.25);
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  animation: fadeInUp 0.5s ease;
-}
-
-.live-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ff4757;
-  animation: liveBlink 1.5s ease-in-out infinite;
-}
-
-.live-text {
-  color: white;
-}
-
-@keyframes liveBlink {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.8); }
-}
-
-/* ============================================
-   3. TTS 语音播报按钮
-   ============================================ */
-
-.tts-btn {
-  position: fixed;
-  bottom: 200px;
-  right: 16px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #00b894, #00cec9);
-  color: white;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  transition: all 0.3s ease;
-}
-
-.tts-btn:hover {
+.timeline-h-node:hover {
   transform: scale(1.1);
 }
 
-.tts-btn.speaking {
-  animation: ttsPulse 1s ease-in-out infinite;
-}
-
-@keyframes ttsPulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 184, 148, 0.4); }
-  50% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(0, 184, 148, 0); }
-}
-
-.tts-toast {
-  position: fixed;
-  bottom: 100px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: rgba(0, 0, 0, 0.75);
-  color: white;
-  padding: 10px 24px;
-  border-radius: var(--radius-lg);
-  font-size: 14px;
-  font-weight: 600;
-  z-index: 10001;
-  opacity: 0;
-  transition: all 0.3s ease;
-  pointer-events: none;
-}
-
-.tts-toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* ============================================
-   4. 海报生成
-   ============================================ */
-
-.poster-btn-float {
-  position: fixed;
-  bottom: 260px;
-  right: 16px;
-  width: 48px;
-  height: 48px;
+.timeline-h-dot {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #fdcb6e, #e17055);
-  color: white;
-  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 20px;
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-  transition: all 0.3s ease;
+  background: #eee;
+  border: 3px solid #ddd;
+  transition: all 0.3s;
 }
 
-.poster-btn-float:hover {
-  transform: scale(1.1) rotate(-5deg);
-}
-
-.poster-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  padding: 16px;
-}
-
-.poster-modal.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.poster-modal-content {
-  background: white;
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 400px;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transform: scale(0.9);
-  transition: transform 0.3s ease;
-}
-
-.poster-modal.active .poster-modal-content {
-  transform: scale(1);
-}
-
-.poster-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.poster-modal-header h3 {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.poster-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-size: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition);
-}
-
-.poster-close:hover {
-  background: #ffebee;
-  color: #e74c3c;
-}
-
-.poster-canvas-wrap {
-  padding: 16px;
-  overflow-y: auto;
-  display: flex;
-  justify-content: center;
-  background: #f5f5f5;
-}
-
-.poster-canvas-wrap canvas {
-  max-width: 100%;
-  height: auto;
-  border-radius: 12px;
-  box-shadow: var(--shadow-md);
-}
-
-.poster-actions {
-  display: flex;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid var(--color-border);
-}
-
-.poster-btn {
-  flex: 1;
-  padding: 12px;
-  border-radius: var(--radius-sm);
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: var(--transition);
-}
-
-.poster-btn-share {
+.timeline-h-node.active .timeline-h-dot {
   background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.poster-btn-copy {
-  background: var(--color-bg);
-  color: var(--color-text);
+.timeline-h-line {
+  width: 40px;
+  height: 3px;
+  background: #ddd;
+  flex-shrink: 0;
 }
 
-.poster-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+.timeline-h-line.active {
+  background: linear-gradient(90deg, #667eea, #764ba2);
 }
 
-.poster-toast {
-  position: fixed;
-  bottom: 100px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: rgba(0, 0, 0, 0.75);
-  color: white;
-  padding: 10px 24px;
-  border-radius: var(--radius-lg);
-  font-size: 14px;
-  font-weight: 600;
-  z-index: 10001;
-  opacity: 0;
-  transition: all 0.3s ease;
-  pointer-events: none;
+.timeline-h-date {
+  font-size: 11px;
+  color: #999;
   white-space: nowrap;
 }
 
-.poster-toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
+.timeline-h-city {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
 }
 
-/* ============================================
-   响应式调整
-   ============================================ */
+/* ---- 4. 目的地打卡集章 ---- */
+.stamp-collection {
+  margin: 0 16px 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fff5f5, #f0fff4);
+  border-radius: var(--radius-lg);
+  border: 2px dashed #ffd6d6;
+}
 
-@media (min-width: 768px) {
-  .tts-btn,
-  .poster-btn-float {
-    right: calc(50% - 300px + 16px);
-  }
+.stamp-title {
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+  color: #e85d75;
+}
+
+.stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.stamp-item {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: white;
+  border: 2px solid #eee;
+  transition: all 0.3s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.stamp-item.stamped {
+  border-color: #e74c3c;
+  background: linear-gradient(135deg, #fff5f5, #ffe0e0);
+}
+
+.stamp-item.stamped::after {
+  content: '✓';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  background: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.stamp-emoji {
+  font-size: 32px;
+}
+
+.stamp-name {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+}
+
+.stamp-progress {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #999;
+}
+
+/* ---- 6. 拍照姿势指导 ---- */
+.photo-pose-guide {
+  margin: 12px 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border-radius: var(--radius-md);
+}
+
+.photo-pose-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4c51bf;
+}
+
+.photo-pose-list {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.photo-pose-list::-webkit-scrollbar {
+  display: none;
+}
+
+.photo-pose-card {
+  flex-shrink: 0;
+  width: 120px;
+  padding: 12px;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.photo-pose-emoji {
+  font-size: 40px;
+  margin-bottom: 6px;
+}
+
+.photo-pose-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.photo-pose-desc {
+  font-size: 10px;
+  color: #999;
+}
+
+/* ---- 7. 当地方言翻译 ---- */
+.dialect-translator {
+  margin: 12px 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-radius: var(--radius-md);
+  border-left: 4px solid #f59e0b;
+}
+
+.dialect-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #92400e;
+}
+
+.dialect-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #fcd34d;
+}
+
+.dialect-item:last-child {
+  border-bottom: none;
+}
+
+.dialect-phrase {
+  flex: 1;
+}
+
+.dialect-cn {
+  font-size: 14px;
+  color: #333;
+}
+
+.dialect-local {
+  font-size: 12px;
+  color: #b45309;
+  margin-top: 2px;
+}
+
+.dialect-play {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ---- 8. 美食雷达图 ---- */
+.food-radar {
+  margin: 12px 16px;
+  padding: 16px;
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.food-radar-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.food-radar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.food-radar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  transition: all 0.3s;
+}
+
+.food-radar-item:hover {
+  background: #fff5f5;
+  transform: translateX(4px);
+}
+
+.food-radar-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.food-radar-rank.top3 {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+}
+
+.food-radar-rank.normal {
+  background: #e5e7eb;
+  color: #666;
+}
+
+.food-radar-info {
+  flex: 1;
+}
+
+.food-radar-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.food-radar-meta {
+  font-size: 11px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.food-radar-score {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+/* ---- 10. 行李清单勾选 ---- */
+.packing-list-section {
+  margin: 0 16px 20px;
+  padding: 20px;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.packing-list-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.packing-progress {
+  margin-bottom: 16px;
+}
+
+.packing-progress-bar {
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.packing-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.packing-progress-text {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.packing-category {
+  margin-bottom: 16px;
+}
+
+.packing-category-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #e0e7ff;
+}
+
+.packing-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.packing-item:hover {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding-left: 8px;
+}
+
+.packing-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.packing-item.checked .packing-checkbox {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+
+.packing-item.checked .packing-item-text {
+  text-decoration: line-through;
+  color: #999;
+}
+
+/* ---- 11. 日出日落时间 ---- */
+.sun-times {
+  margin: 0 16px 16px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fef3c7, #fed7aa);
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.sun-item {
+  text-align: center;
+}
+
+.sun-icon {
+  font-size: 32px;
+  margin-bottom: 4px;
+}
+
+.sun-label {
+  font-size: 11px;
+  color: #92400e;
+  margin-bottom: 2px;
+}
+
+.sun-time {
+  font-size: 18px;
+  font-weight: 700;
+  color: #78350f;
+}
+
+.sun-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(146, 64, 14, 0.2);
 }

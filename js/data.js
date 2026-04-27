@@ -37,6 +37,78 @@ const CHAT_MESSAGES = [
   { sender: "小庆", emoji: "👨", text: "出发！🚗💨", time: "08:00" }
 ];
 
+// 2. 时光轴数据
+const TIMELINE_DATA = [
+  { day: 1, date: '5/1', city: '高邮', emoji: '🏮', active: true },
+  { day: 2, date: '5/2', city: '连云港', emoji: '🌊', active: false },
+  { day: 3, date: '5/3', city: '日照', emoji: '🏖️', active: false },
+  { day: 4, date: '5/4', city: '徐州', emoji: '🏛️', active: false },
+  { day: 5, date: '5/5', city: '合肥', emoji: '🏠', active: false }
+];
+
+// 4. 打卡集章数据
+const STAMP_DATA = [
+  { name: '南门大街', emoji: '🏮', city: '高邮' },
+  { name: '盂城驿', emoji: '📯', city: '高邮' },
+  { name: '连岛沙滩', emoji: '🏖️', city: '连云港' },
+  { name: '海上云台山', emoji: '⛰️', city: '连云港' },
+  { name: '万平口', emoji: '🌊', city: '日照' },
+  { name: '灯塔景区', emoji: '🗼', city: '日照' },
+  { name: '云龙湖', emoji: '🏞️', city: '徐州' },
+  { name: '户部山', emoji: '🏛️', city: '徐州' },
+  { name: '东夷小镇', emoji: '🏮', city: '日照' }
+];
+
+// 6. 拍照姿势
+const PHOTO_POSES = [
+  { name: '海边跳跃', emoji: '🏃', desc: '背对镜头，跳起来' },
+  { name: '古镇回眸', emoji: '💃', desc: '侧身回头，微笑' },
+  { name: '举高高', emoji: '🙌', desc: '双手举过头顶' },
+  { name: '背影杀', emoji: '🚶', desc: '背对镜头走路' },
+  { name: '比个心', emoji: '❤️', desc: '双手比心' }
+];
+
+// 7. 方言翻译
+const DIALECT_DATA = {
+  '连云港': [
+    { cn: '你好', local: '侬好', pinyin: 'nong hao' },
+    { cn: '吃饭了吗', local: '七饭了伐', pinyin: 'qi fan le fa' },
+    { cn: '谢谢', local: '霞霞', pinyin: 'xia xia' },
+    { cn: '再见', local: '再会', pinyin: 'zai hui' }
+  ],
+  '徐州': [
+    { cn: '你好', local: '您好', pinyin: 'nin hao' },
+    { cn: '吃饭了吗', local: '喝汤了吗', pinyin: 'he tang le ma' },
+    { cn: '谢谢', local: '多谢', pinyin: 'duo xie' },
+    { cn: '再见', local: '白白了', pinyin: 'bai bai le' }
+  ]
+};
+
+// 8. 美食雷达
+const FOOD_RADAR = [
+  { name: '高邮阳春面', score: 9.2, distance: '0.5km', price: '¥15' },
+  { name: '蒲包肉', score: 8.8, distance: '0.3km', price: '¥20' },
+  { name: '海鲜水饺', score: 9.0, distance: '1.2km', price: '¥35' },
+  { name: '地锅鸡', score: 9.5, distance: '0.8km', price: '¥68' }
+];
+
+// 10. 行李清单
+const PACKING_LIST = [
+  { category: '证件', items: ['身份证', '驾驶证', '行驶证'] },
+  { category: '衣物', items: ['薄长袖', '防晒衣', '薄外套', '沙滩鞋'] },
+  { category: '电子', items: ['手机充电器', '充电宝', '相机', '车载充电器'] },
+  { category: '药品', items: ['晕车药', '创可贴', '防晒霜', '驱蚊水'] },
+  { category: '其他', items: ['雨伞', '墨镜', '零食', '矿泉水'] }
+];
+
+// 11. 日出日落
+const SUN_TIMES = {
+  '高邮': { sunrise: '05:28', sunset: '18:52' },
+  '连云港': { sunrise: '05:15', sunset: '18:45' },
+  '日照': { sunrise: '05:12', sunset: '18:48' },
+  '徐州': { sunrise: '05:22', sunset: '18:55' }
+};
+
 const TRIP_DATA = {
   title: "🚗 小庆一家五一自驾游",
   subtitle: "程老师👨‍🦳 都老师👩‍🦳 小庆👨 香香👩 · 高邮→连云港→日照→徐州",
