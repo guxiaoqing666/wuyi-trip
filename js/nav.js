@@ -339,22 +339,88 @@ function initClickHearts() {
   });
 }
 
-// 背景音乐切换
+// 背景音乐
+let musicAudio = null;
 let musicPlaying = false;
+
+// 旅游欢快音乐列表（使用免费音乐URL）
+const MUSIC_PLAYLIST = [
+  { name: '旅行', url: 'https://music.163.com/song/media/outer/url?id=25706282.mp3' },
+  { name: '晴天', url: 'https://music.163.com/song/media/outer/url?id=186016.mp3' },
+  { name: '小幸运', url: 'https://music.163.com/song/media/outer/url?id=409650842.mp3' }
+];
+let currentMusicIndex = 0;
+
 function toggleMusic() {
   const btn = document.getElementById('musicBtn');
   if (!btn) return;
   
+  if (!musicAudio) {
+    musicAudio = new Audio();
+    musicAudio.loop = true;
+    musicAudio.volume = 0.5;
+  }
+  
   musicPlaying = !musicPlaying;
+  
   if (musicPlaying) {
     btn.classList.add('playing');
     btn.innerHTML = '🎶';
-    // 这里可以添加真实音频播放逻辑
-    console.log('🎵 背景音乐播放中...');
+    btn.title = '点击暂停音乐';
+    
+    // 播放当前音乐
+    const song = MUSIC_PLAYLIST[currentMusicIndex];
+    musicAudio.src = song.url;
+    musicAudio.play().catch(e => {
+      console.log('音乐播放失败，可能需要用户交互后才能播放:', e);
+      // 显示提示
+      showMusicTip('点击页面任意位置后，再点音乐按钮即可播放');
+    });
+    
+    console.log('🎵 正在播放: ' + song.name);
   } else {
     btn.classList.remove('playing');
     btn.innerHTML = '🎵';
-    console.log('🎵 背景音乐已暂停');
+    btn.title = '点击播放音乐';
+    musicAudio.pause();
+    console.log('🎵 音乐已暂停');
+  }
+}
+
+function showMusicTip(text) {
+  const tip = document.createElement('div');
+  tip.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    z-index: 10000;
+    animation: fadeInUp 0.3s ease;
+  `;
+  tip.textContent = text;
+  document.body.appendChild(tip);
+  
+  setTimeout(() => {
+    tip.style.opacity = '0';
+    tip.style.transition = 'opacity 0.5s';
+    setTimeout(() => tip.remove(), 500);
+  }, 3000);
+}
+
+// 切换下一首
+function nextMusic() {
+  if (!musicAudio) return;
+  currentMusicIndex = (currentMusicIndex + 1) % MUSIC_PLAYLIST.length;
+  if (musicPlaying) {
+    const song = MUSIC_PLAYLIST[currentMusicIndex];
+    musicAudio.src = song.url;
+    musicAudio.play();
+    console.log('🎵 切换到: ' + song.name);
   }
 }
 
