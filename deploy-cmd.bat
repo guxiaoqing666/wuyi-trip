@@ -50,14 +50,26 @@ git remote add origin https://github.com/wuyi-trip/wuyi-trip.git
 echo [OK] Remote set
 
 echo.
-echo ----------------------------------------
-echo  Next: Enter your GitHub credentials
-echo  Username: wuyi-trip
-echo  Password: Your GitHub password
-echo  (Use Personal Access Token if 2FA enabled)
-echo ----------------------------------------
+echo ========================================
+echo  IMPORTANT: GitHub Password Auth Changed
+echo ========================================
 echo.
+echo GitHub no longer accepts password for git push.
+echo You need a Personal Access Token (PAT).
+echo.
+echo To create a PAT:
+echo 1. Go to https://github.com/settings/tokens
+echo 2. Click "Generate new token (classic)"
+echo 3. Select scope: repo (full control)
+echo 4. Click Generate token
+echo 5. COPY the token immediately (you can't see it again!)
+echo.
+echo When prompted for password, PASTE the token.
+echo.
+pause
 
+echo.
+echo Pushing to GitHub...
 git branch -M main
 git push -u origin main
 
@@ -65,16 +77,12 @@ if errorlevel 1 (
     echo.
     echo [X] Push failed!
     echo.
-    echo Possible reasons:
-    echo 1. Repository does not exist on GitHub
-    echo 2. Wrong username or password
-    echo 3. Two-factor auth enabled, need Token
+    echo If it says "Authentication failed":
+    echo - Make sure you used the Token, not your password
     echo.
-    echo Fix:
-    echo 1. Go to https://github.com/new
-    echo 2. Repository name: wuyi-trip
-    echo 3. Select Public, click Create
-    echo 4. Run this script again
+    echo If it says "Repository not found":
+    echo - Check the repository exists at github.com/wuyi-trip/wuyi-trip
+    echo.
     pause
     exit /b 1
 )
