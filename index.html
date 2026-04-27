@@ -42,12 +42,6 @@
     </div>
   </header>
 
-  <!-- 2. 倒计时/正计时 -->
-  <div class="countdown-banner" id="countdown-banner">
-    <div class="countdown-label">🎯 距离五一出发还有</div>
-    <div class="countdown-value"><span id="countdown-days">--</span><span class="countdown-unit"> 天</span></div>
-  </div>
-
   <!-- 温馨欢迎语 -->
   <div class="welcome-banner">
     🌸 一家四口，五一小长假，出发啦！🌸
@@ -59,12 +53,6 @@
   <!-- 家庭合影框 -->
   <div class="family-photo-frame">
     <div class="family-photo-text">「 程老师 & 都老师 & 小庆 & 香香 」<br>📍 2025五一 · 山东江苏游</div>
-  </div>
-
-  <!-- 11. 家庭群聊预览 -->
-  <div class="chat-container" id="chat-preview">
-    <div class="chat-header">💬 家庭群聊 (4)</div>
-    <div id="chat-messages"></div>
   </div>
 
   <!-- 行程进度 -->
@@ -127,12 +115,6 @@
 
   <!-- 10. 到达动画容器 -->
   <div class="arrival-celebration" id="arrivalCelebration"></div>
-
-  <!-- 7. 语音留言气泡 -->
-  <section id="voice-section" style="margin: 16px;"></section>
-
-  <!-- 13. 步数/活跃度追踪 -->
-  <section id="activity-section" style="margin: 0 16px 16px;"></section>
 
   <!-- 行程内容容器 -->
   <main id="trip-content"></main>
@@ -646,14 +628,9 @@
     }
     
     document.addEventListener('DOMContentLoaded', () => {
-      renderCountdown();
       renderFamily();
-      renderChat();
-      renderVoiceSection();
-      renderActivitySection();
       renderTrip();
       addFamilyTips();
-      renderHomeCountdown();
       renderTips();
       initBackToTop();
       // 延迟加载地图，确保DOM就绪
