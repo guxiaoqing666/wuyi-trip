@@ -90,7 +90,7 @@
     <input type="password" class="password-input" id="pwdInput" placeholder="输入密码" maxlength="6">
     <button class="login-btn" onclick="checkPassword()">进入行程</button>
     <div class="error-msg" id="errorMsg">密码错误，请重试</div>
-    <div class="family-hint">💡 提示：程老师生日年份后两位</div>
+    <div class="family-hint">💡 提示：香香出生年月日</div>
   </div>
 
   <script>
@@ -98,8 +98,8 @@
       const pwd = document.getElementById('pwdInput').value;
       const error = document.getElementById('errorMsg');
       
-      // 密码：程老师59岁，生日年份后两位 = 59
-      if (pwd === '1959' || pwd === '59') {
+      // 密码：香香出生日期 19970404
+      if (pwd === '19970404') {
         // 保存登录状态
         sessionStorage.setItem('wuyi_login', 'true');
         // 跳转到主页面
