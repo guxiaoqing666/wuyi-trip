@@ -8,29 +8,8 @@
   <meta name="theme-color" content="#667eea">
   <title>🚗 五一自驾游行程</title>
   <link rel="stylesheet" href="css/style.css">
-  <!-- 高德地图 JS API - 请替换为您自己的Key -->
-  <!-- 获取Key: https://lbs.amap.com/api/javascript-api-v2/guide/abc/prepare -->
-  <script>
-    // ============================================
-    // ⚠️ 重要：请替换为您自己的高德地图Key
-    // 1. 访问 https://lbs.amap.com/
-    // 2. 注册/登录账号
-    // 3. 创建应用 → 添加Key（Web端JS API）
-    // 4. 将下面的 key 替换为您的真实Key
-    // ============================================
-    window.AMAP_CONFIG = {
-      key: '6a00aea5607e3e7bec6c21b35b2aecbb',
-      securityConfig: {
-        securityJsCode: '64fc697f79114e37fe4a99d6e6e22a5c'
-      }
-    };
-    
-    // 本地开发时跳过地图错误
-    window._AMapSecurityConfig = {
-      securityJsCode: '64fc697f79114e37fe4a99d6e6e22a5c'
-    };
-  </script>
-  <script id="amap-script"></script>
+  <!-- 高德地图 JS API -->
+  <script src="https://webapi.amap.com/maps?v=1.4.15&key=6a00aea5607e3e7bec6c21b35b2aecbb"></script>
 </head>
 <body>
   <!-- 浮动爱心背景 -->
@@ -287,27 +266,13 @@
     // ============================================
     
     function loadAmapScript() {
-      const config = window.AMAP_CONFIG || {};
-      const key = config.key || '';
-      
-      // 检查Key是否有效
-      if (!key || key === 'YOUR_AMAP_KEY_HERE' || key.length < 10) {
-        console.warn('请替换高德地图Key');
+      // 高德地图已在head中加载，直接初始化
+      if (typeof AMap !== 'undefined') {
+        initOverviewMap();
+      } else {
+        console.warn('高德地图API未加载');
         showMapFallback();
-        return;
       }
-      
-      // 动态加载高德地图脚本
-      const script = document.getElementById('amap-script');
-      script.src = `https://webapi.amap.com/maps?v=2.0&key=${key}`;
-      script.onload = function() {
-        if (typeof AMap !== 'undefined') {
-          initOverviewMap();
-        }
-      };
-      script.onerror = function() {
-        showMapFallback();
-      };
     }
     
     function showMapFallback() {

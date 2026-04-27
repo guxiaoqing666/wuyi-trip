@@ -133,7 +133,7 @@ function initOverviewMap() {
       icon: new AMap.Icon({
         size: new AMap.Size(24, 34),
         imageSize: new AMap.Size(24, 34),
-        image: `https://webapi.amap.com/theme/v1.3/markers/n/mark_b${point.day + 1}.png`
+        image: `https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png`
       })
     });
     
