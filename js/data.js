@@ -4,8 +4,8 @@
 
 const FAMILY = {
   members: [
-    { name: "程老师", role: "爸爸", age: 59, emoji: "👨‍🦳", color: "#4a90d9", desc: "资深领航员", voice: "安全第一，慢慢开！" },
-    { name: "都老师", role: "妈妈", age: 56, emoji: "👩‍🦳", color: "#e85d75", desc: "美食鉴赏家", voice: "该吃饭啦，别饿着！" },
+    { name: "程老师", role: "爸爸", age: 59, emoji: "👨", color: "#4a90d9", desc: "资深领航员", voice: "安全第一，慢慢开！" },
+    { name: "都老师", role: "妈妈", age: 56, emoji: "👩", color: "#e85d75", desc: "美食鉴赏家", voice: "该吃饭啦，别饿着！" },
     { name: "小庆", role: "儿子", age: null, emoji: "👨", color: "#27ae60", desc: "首席司机🚗", voice: "放心，我开车稳得很！" },
     { name: "香香", role: "儿媳", age: null, emoji: "👩", color: "#f39c12", desc: "替补司机📸", voice: "这里好美，快帮我拍照！" }
   ]
