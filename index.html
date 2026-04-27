@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#667eea">
+  <title>🚗 五一自驾游行程</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- 高德地图 JS API - 请替换为您自己的Key -->
+  <!-- 获取Key: https://lbs.amap.com/api/javascript-api-v2/guide/abc/prepare -->
+  <script>
+    // ============================================
+    // ⚠️ 重要：请替换为您自己的高德地图Key
+    // 1. 访问 https://lbs.amap.com/
+    // 2. 注册/登录账号
+    // 3. 创建应用 → 添加Key（Web端JS API）
+    // 4. 将下面的 key 替换为您的真实Key
+    // ============================================
+    window.AMAP_CONFIG = {
+      key: '6a00aea5607e3e7bec6c21b35b2aecbb',
+      securityConfig: {
+        securityJsCode: '64fc697f79114e37fe4a99d6e6e22a5c'
+      }
+    };
+  </script>
+  <script id="amap-script"></script>
+</head>
+<body>
+  <!-- 头部 -->
+  <header class="header">
+    <h1 class="header-title">🚗 五一自驾游</h1>
+    <p class="header-subtitle">高邮 → 连云港 → 日照 → 徐州 · 5天4晚</p>
+    <div class="header-stats">
+      <div class="header-stat">
+        <div class="header-stat-value">5</div>
+        <div class="header-stat-label">天行程</div>
+      </div>
+      <div class="header-stat">
+        <div class="header-stat-value">4</div>
+        <div class="header-stat-label">座城市</div>
+      </div>
+      <div class="header-stat">
+        <div class="header-stat-value">~1200</div>
+        <div class="header-stat-label">公里</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 总览地图 -->
+  <section class="overview-section">
+    <div class="overview-header">
+      <span class="overview-title">🗺️ 全程路线总览</span>
+      <span style="font-size:12px;color:#7f8c8d;">点击标记可导航</span>
+    </div>
+    <div class="overview-map-container">
+      <div id="overview-map"></div>
+    </div>
+  </section>
+
+  <!-- 吸顶快速导航 -->
+  <nav class="quick-nav-sticky">
+    <div class="quick-nav">
+      <button class="quick-nav-btn day-1" onclick="scrollToDay(0)">
+        <span>📅</span> Day1
+      </button>
+      <button class="quick-nav-btn day-2" onclick="scrollToDay(1)">
+        <span>📅</span> Day2
+      </button>
+      <button class="quick-nav-btn day-3" onclick="scrollToDay(2)">
+        <span>📅</span> Day3
+      </button>
+      <button class="quick-nav-btn day-4" onclick="scrollToDay(3)">
+        <span>📅</span> Day4
+      </button>
+      <button class="quick-nav-btn day-5" onclick="scrollToDay(4)">
+        <span>📅</span> Day5
+      </button>
+    </div>
+  </nav>
+
+  <!-- 浮动返回顶部按钮 -->
+  <button class="back-to-top" id="backToTop" onclick="scrollToTop()" title="返回顶部">
+    ⬆️
+  </button>
+
+  <!-- 行程内容容器 -->
+  <main id="trip-content"></main>
+
+  <!-- 底部实用信息 -->
+  <section class="bottom-section">
+    <button class="bottom-toggle" onclick="this.classList.toggle('active'); toggleTips()">
+      <span>📋 实用信息（行李/驾驶/特产）</span>
+      <span class="bottom-toggle-icon">▼</span>
+    </button>
+    <div class="tips-panel" id="tips-panel">
+      <div class="tips-category">
+        <div class="tips-category-title">🎒 行李清单</div>
+        <ul class="tips-category-list" id="packing-list"></ul>
+      </div>
+      <div class="tips-category">
+        <div class="tips-category-title">🚗 驾驶提示</div>
+        <ul class="tips-category-list" id="driving-list"></ul>
+      </div>
+      <div class="tips-category">
+        <div class="tips-category-title">🎁 特产推荐</div>
+        <ul class="tips-category-list" id="food-list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <p>🗺️ 点击任意地点的「📍导航」按钮，可直接唤起高德地图</p>
+    <p style="margin-top:4px;">建议将本页面添加到手机主屏幕，离线也能查看</p>
+  </footer>
+
+  <!-- 脚本 -->
+  <script src="js/data.js"></script>
+  <script src="js/nav.js"></script>
+  <script>
+    // ============================================
+    // 渲染行程内容
+    // ============================================
+    
+    function renderTrip() {
+      const container = document.getElementById('trip-content');
+      const dayColors = ['day-1', 'day-2', 'day-3', 'day-4', 'day-5'];
+      
+      TRIP_DATA.days.forEach((day, dayIndex) => {
+        const colorClass = dayColors[dayIndex];
+        
+        // 生成时间轴HTML
+        let timelineHtml = '';
+        day.schedule.forEach(item => {
+          const hasNav = item.nav ? true : false;
+          let navButton = '';
+          if (hasNav) {
+            const navName = item.nav.name.replace(/'/g, "\\'");
+            const navAddress = (item.nav.address || '').replace(/'/g, "\\'");
+            navButton = `
+              <button class="nav-btn-inline" onclick="showNavModal({name:'${navName}',lnglat:[${item.nav.lnglat}],address:'${navAddress}'})">
+                <span>📍</span> 导航
+              </button>
+            `;
+          }
+          
+          const foodTags = item.foods ? `
+            <div class="food-tags">
+              ${item.foods.map(f => `<span class="food-tag">${f}</span>`).join('')}
+            </div>
+          ` : '';
+          
+          const tipsList = item.tips ? `
+            <ul class="tips-list">
+              ${item.tips.map(t => `<li>${t}</li>`).join('')}
+            </ul>
+          ` : '';
+          
+          timelineHtml += `
+            <div class="timeline-item type-${item.type}">
+              <div class="timeline-time">${item.time}</div>
+              <div class="timeline-icon">${item.icon}</div>
+              <div class="timeline-content">
+                <div class="timeline-title">${item.title}</div>
+                <div class="timeline-desc">${item.desc}</div>
+                ${navButton}
+                ${foodTags}
+                ${tipsList}
+              </div>
+            </div>
+          `;
+        });
+        
+        // 酒店信息
+        const hotelHtml = day.hotel ? `
+          <div class="hotel-info">
+            <div class="hotel-label">🏨 住宿</div>
+            <div class="hotel-name">${day.hotel.name}</div>
+            <div class="hotel-tip">${day.hotel.area} · ${day.hotel.tip}</div>
+          </div>
+        ` : '';
+        
+        // 单日地图
+        const dayMapHtml = `
+          <div class="day-map-container" id="day-map-${dayIndex}"></div>
+          <button class="day-map-btn" id="day-map-btn-${dayIndex}" onclick="toggleDayMap(${dayIndex})">
+            <span>🗺️</span> 查看当日地图
+          </button>
+        `;
+        
+        // 组装卡片
+        const cardHtml = `
+          <article class="day-card" id="day-${dayIndex}">
+            <div class="day-header ${colorClass}">
+              <div class="day-header-top">
+                <div class="day-number">0${day.day}</div>
+                <div class="day-date">
+                  <div class="day-date-text">${day.date}</div>
+                  <div class="day-weekday">${day.weekday}</div>
+                </div>
+              </div>
+              <div class="day-theme">${day.theme}</div>
+              <div class="day-route-info">
+                <span>🛣️ ${day.distance}</span>
+                <span>⏱️ ${day.driveTime}</span>
+              </div>
+            </div>
+            <div class="timeline">
+              ${timelineHtml}
+            </div>
+            ${hotelHtml}
+            ${dayMapHtml}
+          </article>
+        `;
+        
+        container.innerHTML += cardHtml;
+      });
+    }
+    
+    // ============================================
+    // 渲染实用信息
+    // ============================================
+    
+    function renderTips() {
+      const packingList = document.getElementById('packing-list');
+      const drivingList = document.getElementById('driving-list');
+      const foodList = document.getElementById('food-list');
+      
+      if (TRIP_DATA.tips.packing) {
+        packingList.innerHTML = TRIP_DATA.tips.packing.map(t => `<li>${t}</li>`).join('');
+      }
+      if (TRIP_DATA.tips.driving) {
+        drivingList.innerHTML = TRIP_DATA.tips.driving.map(t => `<li>${t}</li>`).join('');
+      }
+      if (TRIP_DATA.tips.food) {
+        foodList.innerHTML = TRIP_DATA.tips.food.map(t => `<li>${t}</li>`).join('');
+      }
+    }
+    
+    // ============================================
+    // 高德地图 Key 处理
+    // ============================================
+    
+    function loadAmapScript() {
+      const config = window.AMAP_CONFIG || {};
+      const key = config.key || '';
+      
+      // 检查Key是否有效
+      if (!key || key === 'YOUR_AMAP_KEY_HERE' || key.length < 10) {
+        console.warn('请替换高德地图Key');
+        showMapFallback();
+        return;
+      }
+      
+      // 动态加载高德地图脚本
+      const script = document.getElementById('amap-script');
+      script.src = `https://webapi.amap.com/maps?v=2.0&key=${key}`;
+      script.onload = function() {
+        if (typeof AMap !== 'undefined') {
+          initOverviewMap();
+        }
+      };
+      script.onerror = function() {
+        showMapFallback();
+      };
+    }
+    
+    function showMapFallback() {
+      const mapContainer = document.getElementById('overview-map');
+      if (mapContainer) {
+        // 生成静态路线图HTML
+        const routeNodes = [
+          { name: '华地伟星龙川时代（合肥）', detail: '起点', type: 'start', nav: {name:'华地伟星龙川时代',lnglat:[117.1285,31.7198],address:'安徽省合肥市肥西县'} },
+          { name: '高邮南门大街', detail: 'Day1 · 148km · 1.5h', type: 'day1', nav: {name:'高邮南门大街',lnglat:[119.4365,32.7841],address:'江苏省扬州市高邮市'} },
+          { name: '连云港连岛', detail: 'Day1-2 · 225km · 2.5h', type: 'day2', nav: {name:'连岛大沙湾游乐园',lnglat:[119.4608,34.7556],address:'江苏省连云港市连云区'} },
+          { name: '日照万平口', detail: 'Day3 · 82km · 1h', type: 'day3', nav: {name:'万平口风景区',lnglat:[119.5389,35.4187],address:'山东省日照市东港区'} },
+          { name: '徐州云龙湖', detail: 'Day4 · 326km · 3.5h', type: 'day4', nav: {name:'云龙湖风景区',lnglat:[117.1823,34.2312],address:'江苏省徐州市泉山区'} },
+          { name: '华地伟星龙川时代（合肥）', detail: '终点 · 358km · 3.5h', type: 'end', nav: {name:'华地伟星龙川时代',lnglat:[117.1285,31.7198],address:'安徽省合肥市肥西县'} }
+        ];
+        
+        let routeHtml = '<div class="static-route-map">';
+        routeHtml += '<div class="static-route-title">📍 全程路线概览（点击可导航）</div>';
+        routeHtml += '<div class="static-route-path">';
+        
+        routeNodes.forEach((node, idx) => {
+          const navName = node.nav.name.replace(/'/g, "\\'");
+          const navAddr = node.nav.address.replace(/'/g, "\\'");
+          routeHtml += `
+            <div class="static-route-node">
+              <div class="static-route-dot ${node.type}"></div>
+              <div class="static-route-info">
+                <div class="static-route-name">${node.name}</div>
+                <div class="static-route-detail">${node.detail}</div>
+              </div>
+              <button class="static-route-nav-btn" onclick="showNavModal({name:'${navName}',lnglat:[${node.nav.lnglat}],address:'${navAddr}'})">导航</button>
+            </div>
+          `;
+          if (idx < routeNodes.length - 1) {
+            routeHtml += '<div class="static-route-line"></div>';
+          }
+        });
+        
+        routeHtml += '</div></div>';
+        
+        mapContainer.innerHTML = routeHtml + `
+          <div class="map-fallback" style="border-top:1px solid #eee;">
+            <p style="font-size:13px;line-height:1.8;">
+              <strong>🗺️ 地图需要高德Key才能显示完整地图</strong><br>
+              1. 访问 <a href="https://lbs.amap.com/" target="_blank" style="color:#667eea;">lbs.amap.com</a> 注册<br>
+              2. 创建应用 → 添加Key（Web端JS API）<br>
+              3. 将Key填入 index.html 中的 AMAP_CONFIG.key
+            </p>
+          </div>
+        `;
+      }
+      
+      // 同时隐藏所有单日地图按钮
+      document.querySelectorAll('.day-map-btn').forEach(btn => {
+        btn.style.display = 'none';
+      });
+    }
+    
+    // ============================================
+    // 初始化
+    // ============================================
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTrip();
+      renderTips();
+      initBackToTop();
+      // 延迟加载地图，确保DOM就绪
+      setTimeout(loadAmapScript, 100);
+    });
+  </script>
+</body>
+</html>

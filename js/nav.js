@@ -1,0 +1,299 @@
+// ============================================
+// 导航跳转逻辑
+// ============================================
+
+/**
+ * 打开高德导航
+ * @param {string} name - 目的地名称
+ * @param {number} lng - 经度
+ * @param {number} lat - 纬度
+ * @param {string} address - 地址（可选）
+ */
+function openNavigation(name, lng, lat, address = '') {
+  // 判断设备类型
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  
+  let url;
+  
+  if (isMobile) {
+    // 手机端：尝试唤起高德App
+    if (isIOS) {
+      url = `iosamap://path?sourceApplication=wuyi-trip&dlat=${lat}&dlon=${lng}&dname=${encodeURIComponent(name)}&dev=0&t=0`;
+    } else {
+      url = `amapuri://route/plan/?dlat=${lat}&dlon=${lng}&dname=${encodeURIComponent(name)}&dev=0&t=0`;
+    }
+    
+    // 尝试唤起App，如果失败则跳转到网页版
+    const startTime = Date.now();
+    window.location.href = url;
+    
+    // 2秒后检查是否唤起成功
+    setTimeout(() => {
+      if (Date.now() - startTime < 2500) {
+        // 可能未唤起成功，跳转到网页版
+        const webUrl = `https://uri.amap.com/navigation?to=${lng},${lat},${encodeURIComponent(name)}&mode=car&policy=1`;
+        window.location.href = webUrl;
+      }
+    }, 2000);
+  } else {
+    // 电脑端：打开高德网页版
+    url = `https://uri.amap.com/navigation?to=${lng},${lat},${encodeURIComponent(name)}&mode=car&policy=1`;
+    window.open(url, '_blank');
+  }
+}
+
+/**
+ * 显示导航确认弹窗
+ * @param {Object} navInfo - 导航信息对象 {name, lnglat, address}
+ */
+function showNavModal(navInfo) {
+  const modal = document.createElement('div');
+  modal.className = 'nav-modal';
+  modal.innerHTML = `
+    <div class="nav-modal-content">
+      <div class="nav-modal-header">
+        <span class="nav-icon">📍</span>
+        <h3>导航到</h3>
+      </div>
+      <div class="nav-modal-body">
+        <p class="nav-dest-name">${navInfo.name}</p>
+        ${navInfo.address ? `<p class="nav-dest-addr">${navInfo.address}</p>` : ''}
+      </div>
+      <div class="nav-modal-actions">
+        <button class="nav-btn nav-btn-cancel" onclick="closeNavModal()">取消</button>
+        <button class="nav-btn nav-btn-confirm" onclick="confirmNav('${navInfo.name}', ${navInfo.lnglat[0]}, ${navInfo.lnglat[1]}, '${navInfo.address || ''}')">
+          <span>🚀</span> 打开导航
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // 点击背景关闭
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeNavModal();
+  });
+  
+  // 动画
+  requestAnimationFrame(() => {
+    modal.classList.add('active');
+  });
+}
+
+function closeNavModal() {
+  const modal = document.querySelector('.nav-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    setTimeout(() => modal.remove(), 300);
+  }
+}
+
+function confirmNav(name, lng, lat, address) {
+  closeNavModal();
+  openNavigation(name, lng, lat, address);
+}
+
+// ============================================
+// 地图相关
+// ============================================
+
+let map = null;
+let markers = [];
+
+/**
+ * 初始化总览地图
+ */
+function initOverviewMap() {
+  if (typeof AMap === 'undefined') {
+    console.warn('高德地图API未加载');
+    return;
+  }
+  
+  map = new AMap.Map('overview-map', {
+    zoom: 7,
+    center: [118.5, 33.5],
+    mapStyle: 'amap://styles/whitesmoke'
+  });
+  
+  // 添加标记点
+  const dayColors = ['#e74c3c', '#3498db', '#f39c12', '#9b59b6', '#27ae60'];
+  
+  ALL_NAV_POINTS.forEach((point, index) => {
+    const color = dayColors[point.day] || '#666';
+    const marker = new AMap.Marker({
+      position: point.lnglat,
+      title: point.name,
+      label: {
+        content: `<div style="background:${color};color:white;padding:2px 8px;border-radius:12px;font-size:12px;white-space:nowrap;">${point.name}</div>`,
+        offset: new AMap.Pixel(0, -35),
+        direction: 'top'
+      },
+      icon: new AMap.Icon({
+        size: new AMap.Size(24, 34),
+        imageSize: new AMap.Size(24, 34),
+        image: `https://webapi.amap.com/theme/v1.3/markers/n/mark_b${point.day + 1}.png`
+      })
+    });
+    
+    marker.on('click', () => {
+      showNavModal({
+        name: point.name,
+        lnglat: point.lnglat,
+        address: ''
+      });
+    });
+    
+    marker.setMap(map);
+    markers.push(marker);
+  });
+  
+  // 绘制路线
+  const path = ALL_NAV_POINTS.map(p => p.lnglat);
+  const polyline = new AMap.Polyline({
+    path: path,
+    strokeColor: '#3498db',
+    strokeWeight: 4,
+    strokeOpacity: 0.8,
+    strokeStyle: 'solid',
+    showDir: true
+  });
+  polyline.setMap(map);
+  
+  // 自适应视野
+  map.setFitView();
+}
+
+/**
+ * 初始化单日地图
+ */
+function initDayMap(dayIndex, containerId) {
+  if (typeof AMap === 'undefined') {
+    document.getElementById(containerId).innerHTML = `
+      <div class="map-fallback">
+        <p>🗺️ 地图加载中...</p>
+        <p>如无法显示，请检查网络连接</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const dayData = TRIP_DATA.days[dayIndex];
+  const dayPoints = ALL_NAV_POINTS.filter(p => p.day === dayIndex + 1 || (dayIndex === 0 && p.day === 0));
+  
+  if (dayPoints.length === 0) return;
+  
+  const dayMap = new AMap.Map(containerId, {
+    zoom: 10,
+    center: dayPoints[0].lnglat,
+    mapStyle: 'amap://styles/whitesmoke'
+  });
+  
+  const dayColors = ['#e74c3c', '#3498db', '#f39c12', '#9b59b6', '#27ae60'];
+  const color = dayColors[dayIndex];
+  
+  dayPoints.forEach((point, idx) => {
+    const marker = new AMap.Marker({
+      position: point.lnglat,
+      title: point.name,
+      label: {
+        content: `<div style="background:${color};color:white;padding:2px 8px;border-radius:12px;font-size:11px;white-space:nowrap;">${point.name}</div>`,
+        offset: new AMap.Pixel(0, -30),
+        direction: 'top'
+      }
+    });
+    
+    marker.on('click', () => {
+      showNavModal({
+        name: point.name,
+        lnglat: point.lnglat,
+        address: ''
+      });
+    });
+    
+    marker.setMap(dayMap);
+  });
+  
+  // 如果有多个点，绘制路线
+  if (dayPoints.length > 1) {
+    const path = dayPoints.map(p => p.lnglat);
+    const polyline = new AMap.Polyline({
+      path: path,
+      strokeColor: color,
+      strokeWeight: 3,
+      strokeOpacity: 0.7,
+      strokeStyle: 'solid'
+    });
+    polyline.setMap(dayMap);
+  }
+  
+  dayMap.setFitView();
+}
+
+// ============================================
+// 页面交互
+// ============================================
+
+function toggleDayMap(dayIndex) {
+  const mapContainer = document.getElementById(`day-map-${dayIndex}`);
+  const btn = document.getElementById(`day-map-btn-${dayIndex}`);
+  
+  if (!mapContainer) return;
+  
+  if (mapContainer.style.display === 'none' || !mapContainer.style.display) {
+    mapContainer.style.display = 'block';
+    btn.innerHTML = '🔼 收起地图';
+    
+    // 延迟初始化地图，确保容器可见
+    setTimeout(() => {
+      initDayMap(dayIndex, `day-map-${dayIndex}`);
+    }, 100);
+  } else {
+    mapContainer.style.display = 'none';
+    btn.innerHTML = '🗺️ 查看当日地图';
+  }
+}
+
+function toggleTips() {
+  const tipsPanel = document.getElementById('tips-panel');
+  if (tipsPanel) {
+    tipsPanel.classList.toggle('active');
+  }
+}
+
+function scrollToDay(dayIndex) {
+  const element = document.getElementById(`day-${dayIndex}`);
+  if (element) {
+    // 考虑吸顶导航栏高度，偏移滚动位置
+    const navHeight = document.querySelector('.quick-nav-sticky')?.offsetHeight || 60;
+    const top = element.getBoundingClientRect().top + window.pageYOffset - navHeight - 8;
+    window.scrollTo({ top: top, behavior: 'smooth' });
+  }
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 返回顶部按钮显示/隐藏
+function initBackToTop() {
+  const btn = document.getElementById('backToTop');
+  if (!btn) return;
+  
+  window.addEventListener('scroll', () => {
+    if (window.pageYOffset > 400) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  });
+}
+
+// 页面加载完成后初始化
+window.addEventListener('load', () => {
+  // 尝试初始化总览地图
+  if (typeof AMap !== 'undefined') {
+    initOverviewMap();
+  }
+});
