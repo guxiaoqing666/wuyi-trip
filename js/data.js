@@ -2,9 +2,18 @@
 // 五一行程数据 - 高德坐标系 (GCJ-02)
 // ============================================
 
+const FAMILY = {
+  members: [
+    { name: "程老师", role: "爸爸", age: 59, emoji: "👨‍🦳", color: "#4a90d9", desc: "掌舵老司机" },
+    { name: "都老师", role: "妈妈", age: 56, emoji: "👩‍🦳", color: "#e85d75", desc: "美食鉴赏家" },
+    { name: "小庆", role: "儿子", age: null, emoji: "👨", color: "#27ae60", desc: "行程规划师" },
+    { name: "香香", role: "儿媳", age: null, emoji: "👩", color: "#f39c12", desc: "拍照小能手" }
+  ]
+};
+
 const TRIP_DATA = {
-  title: "🚗 五一自驾游 · 高邮→连云港→日照→徐州",
-  subtitle: "5天4晚 · 从肥西出发 · 不走回头路",
+  title: "🚗 小庆一家五一自驾游",
+  subtitle: "程老师👨‍🦳 都老师👩‍🦳 小庆👨 香香👩 · 高邮→连云港→日照→徐州",
   startPoint: {
     name: "华地伟星龙川时代",
     address: "安徽省合肥市肥西县",

@@ -28,10 +28,19 @@
   <script id="amap-script"></script>
 </head>
 <body>
+  <!-- 浮动爱心背景 -->
+  <div class="floating-hearts">
+    <div class="floating-heart">💕</div>
+    <div class="floating-heart">💖</div>
+    <div class="floating-heart">💗</div>
+    <div class="floating-heart">💝</div>
+    <div class="floating-heart">💘</div>
+  </div>
+
   <!-- 头部 -->
   <header class="header">
-    <h1 class="header-title">🚗 五一自驾游</h1>
-    <p class="header-subtitle">高邮 → 连云港 → 日照 → 徐州 · 5天4晚</p>
+    <h1 class="header-title">🚗 小庆一家五一自驾游</h1>
+    <p class="header-subtitle">高邮 → 连云港 → 日照 →徐州 · 5天4晚</p>
     <div class="header-stats">
       <div class="header-stat">
         <div class="header-stat-value">5</div>
@@ -47,6 +56,9 @@
       </div>
     </div>
   </header>
+
+  <!-- 家庭成员 -->
+  <section class="family-section" id="family-section"></section>
 
   <!-- 总览地图 -->
   <section class="overview-section">
@@ -326,8 +338,57 @@
     // 初始化
     // ============================================
     
+    // 渲染家庭成员
+    function renderFamily() {
+      const container = document.getElementById('family-section');
+      if (!container || !window.FAMILY) return;
+      
+      container.innerHTML = FAMILY.members.map(m => `
+        <div class="family-member">
+          <div class="family-emoji">${m.emoji}</div>
+          <div class="family-name">${m.name}</div>
+          <div class="family-role">${m.role}${m.age ? ' · ' + m.age + '岁' : ''}</div>
+          <div class="family-desc" style="background: ${m.color}">${m.desc}</div>
+        </div>
+      `).join('');
+    }
+    
+    // 每日家庭小贴士
+    const FAMILY_TIPS = [
+      { emoji: '👨‍🦳', text: '程老师开车辛苦啦！记得每2小时休息一次哦~' },
+      { emoji: '👩‍🦳', text: '都老师负责监督大家按时吃饭，健康饮食！' },
+      { emoji: '👨', text: '小庆记得给程老师换手开车，别累着爸爸~' },
+      { emoji: '👩', text: '香香多拍美照，记录一家人的快乐时光！' },
+      { emoji: '👨‍👩‍👧‍👦', text: '最后一天平安到家，完美收官！' }
+    ];
+    
+    function addFamilyTips() {
+      TRIP_DATA.days.forEach((day, idx) => {
+        const card = document.getElementById(`day-${idx}`);
+        if (!card) return;
+        
+        const tip = FAMILY_TIPS[idx];
+        if (!tip) return;
+        
+        const tipHtml = document.createElement('div');
+        tipHtml.className = 'day-family-tip';
+        tipHtml.innerHTML = `
+          <span class="day-family-tip-emoji">${tip.emoji}</span>
+          <span class="day-family-tip-text">${tip.text}</span>
+        `;
+        
+        // 插入到day-header后面
+        const header = card.querySelector('.day-header');
+        if (header && header.nextSibling) {
+          card.insertBefore(tipHtml, header.nextSibling);
+        }
+      });
+    }
+    
     document.addEventListener('DOMContentLoaded', () => {
+      renderFamily();
       renderTrip();
+      addFamilyTips();
       renderTips();
       initBackToTop();
       // 延迟加载地图，确保DOM就绪
