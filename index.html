@@ -24,6 +24,11 @@
         securityJsCode: '64fc697f79114e37fe4a99d6e6e22a5c'
       }
     };
+    
+    // 本地开发时跳过地图错误
+    window._AMapSecurityConfig = {
+      securityJsCode: '64fc697f79114e37fe4a99d6e6e22a5c'
+    };
   </script>
   <script id="amap-script"></script>
 </head>
@@ -384,7 +389,7 @@
       { emoji: '🚗', text: '小庆司机首日出征！程老师在副驾指点江山~' },
       { emoji: '👩‍🦳', text: '都老师负责监督大家按时吃饭，健康饮食！' },
       { emoji: '📸', text: '香香多拍美照，记录一家人的快乐时光！' },
-      { emoji: '👨‍🦳', text: '程老师今日可换手体验，给小庆放个假~' },
+      { emoji: '👩', text: '小香偶尔换手，让小庆休息休息~' },
       { emoji: '👨‍👩‍👧‍👦', text: '小庆一路平安开回家，全家给你点赞！' }
     ];
     
