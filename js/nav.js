@@ -339,6 +339,80 @@ function initClickHearts() {
   });
 }
 
+// 背景音乐切换
+let musicPlaying = false;
+function toggleMusic() {
+  const btn = document.getElementById('musicBtn');
+  if (!btn) return;
+  
+  musicPlaying = !musicPlaying;
+  if (musicPlaying) {
+    btn.classList.add('playing');
+    btn.innerHTML = '🎶';
+    // 这里可以添加真实音频播放逻辑
+    console.log('🎵 背景音乐播放中...');
+  } else {
+    btn.classList.remove('playing');
+    btn.innerHTML = '🎵';
+    console.log('🎵 背景音乐已暂停');
+  }
+}
+
+// 触发到达动画
+function triggerArrival(dayNumber) {
+  const container = document.getElementById('arrivalCelebration');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  container.classList.add('active');
+  
+  // 彩纸
+  const emojis = ['🎉', '✨', '🎊', '💐', '🌟', '🎈', '💖', '🎁'];
+  for (let i = 0; i < 30; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    confetti.style.left = Math.random() * 100 + '%';
+    confetti.style.animationDelay = Math.random() * 2 + 's';
+    confetti.style.fontSize = (14 + Math.random() * 20) + 'px';
+    container.appendChild(confetti);
+  }
+  
+  // 横幅
+  const banner = document.createElement('div');
+  banner.className = 'arrival-banner';
+  banner.textContent = `🎉 Day ${dayNumber} 到达！`;
+  container.appendChild(banner);
+  
+  // 3秒后移除
+  setTimeout(() => {
+    container.classList.remove('active');
+    container.innerHTML = '';
+  }, 3500);
+}
+
+// 家庭投票
+function vote(option, btnElement) {
+  // 移除其他选中状态
+  const parent = btnElement.parentElement;
+  parent.querySelectorAll('.vote-btn').forEach(b => b.classList.remove('voted'));
+  
+  // 添加选中状态
+  btnElement.classList.add('voted');
+  
+  // 显示投票结果
+  const result = document.createElement('div');
+  result.style.cssText = 'margin-top:8px;font-size:12px;color:#27ae60;';
+  result.textContent = `✓ 已选择: ${option}`;
+  
+  const existing = parent.nextElementSibling;
+  if (existing && existing.classList.contains('vote-result')) {
+    existing.remove();
+  }
+  result.className = 'vote-result';
+  parent.parentElement.appendChild(result);
+}
+
 // 页面加载完成后初始化
 window.addEventListener('load', () => {
   // 尝试初始化总览地图

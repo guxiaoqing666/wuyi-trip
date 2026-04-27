@@ -120,8 +120,25 @@
     ❤️
   </button>
 
+  <!-- 14. 背景音乐按钮 -->
+  <button class="music-btn" id="musicBtn" onclick="toggleMusic()" title="背景音乐">
+    🎵
+  </button>
+
+  <!-- 10. 到达动画容器 -->
+  <div class="arrival-celebration" id="arrivalCelebration"></div>
+
+  <!-- 7. 语音留言气泡 -->
+  <section id="voice-section" style="margin: 16px;"></section>
+
+  <!-- 13. 步数/活跃度追踪 -->
+  <section id="activity-section" style="margin: 0 16px 16px;"></section>
+
   <!-- 行程内容容器 -->
   <main id="trip-content"></main>
+
+  <!-- 15. 返程倒计时 (Day5专用) -->
+  <section id="home-countdown-section"></section>
 
   <!-- 底部实用信息 -->
   <section class="bottom-section">
@@ -232,6 +249,28 @@
         const foodHtml = renderFoodChecklist(currentCity);
         const photoHtml = renderPhotoFrame(`${currentCity} · ${day.theme}`);
         
+        // 家庭投票（每天不同主题）
+        const voteTopics = [
+          { question: '今天午餐吃什么？', options: ['阳春面', '蒲包肉', '咸鸭蛋'] },
+          { question: '下午去哪玩？', options: ['海边沙滩', '云台山', '市区逛'] },
+          { question: '晚餐选哪家？', options: ['海鲜大排档', '本地菜馆', '小吃街'] },
+          { question: '明天早起吗？', options: ['早起看日出', '自然醒', '看心情'] },
+          { question: '返程路上停哪？', options: ['服务区', '蚌埠', '直接回'] }
+        ];
+        const vote = voteTopics[dayIndex];
+        const voteHtml = vote ? `
+          <div class="family-vote">
+            <div class="family-vote-title">🗳️ ${vote.question}</div>
+            <div class="vote-options">
+              ${vote.options.map(opt => `<button class="vote-btn" onclick="vote('${opt}', this)">${opt}</button>`).join('')}
+            </div>
+          </div>
+        ` : '';
+        
+        // 里程加油站（每天累积）
+        const kmAccumulated = [148, 373, 455, 781, 1139];
+        const gasHtml = renderGasStation(kmAccumulated[dayIndex] || 0, 1200);
+        
         // 组装卡片
         const cardHtml = `
           <article class="day-card" id="day-${dayIndex}">
@@ -255,6 +294,8 @@
             </div>
             ${photoHtml}
             ${foodHtml}
+            ${voteHtml}
+            ${gasHtml}
             ${hotelHtml}
             ${dayMapHtml}
           </article>
@@ -559,12 +600,60 @@
       `;
     }
     
+    // 渲染语音留言
+    function renderVoiceSection() {
+      const container = document.getElementById('voice-section');
+      if (container) {
+        container.innerHTML = '<div style="font-size:14px;font-weight:600;margin-bottom:10px;color:#666;">💬 家人寄语</div>' + renderVoiceBubbles();
+      }
+    }
+    
+    // 渲染活动追踪
+    function renderActivitySection() {
+      const container = document.getElementById('activity-section');
+      if (container) {
+        container.innerHTML = renderActivityTracker();
+      }
+    }
+    
+    // 渲染返程倒计时
+    function renderHomeCountdown() {
+      const container = document.getElementById('home-countdown-section');
+      if (!container) return;
+      
+      const now = new Date();
+      const tripEnd = new Date('2025-05-05T14:00:00');
+      
+      if (now >= tripEnd) {
+        container.innerHTML = `
+          <div class="home-countdown">
+            <div class="home-countdown-emoji">🏠</div>
+            <div class="home-countdown-text">已平安到家！</div>
+            <div class="home-countdown-sub">都老师准备好晚饭啦~</div>
+          </div>
+        `;
+      } else if (now >= new Date('2025-05-05T08:00:00')) {
+        const hoursLeft = Math.ceil((tripEnd - now) / (1000 * 60 * 60));
+        container.innerHTML = `
+          <div class="home-countdown">
+            <div class="home-countdown-emoji">🏠</div>
+            <div class="home-countdown-text">预计还有 ${hoursLeft} 小时到家</div>
+            <div class="home-countdown-sub">小庆一路平安驾驶，全家等你！</div>
+            <div class="home-countdown-distance">358km</div>
+          </div>
+        `;
+      }
+    }
+    
     document.addEventListener('DOMContentLoaded', () => {
       renderCountdown();
       renderFamily();
       renderChat();
+      renderVoiceSection();
+      renderActivitySection();
       renderTrip();
       addFamilyTips();
+      renderHomeCountdown();
       renderTips();
       initBackToTop();
       // 延迟加载地图，确保DOM就绪
