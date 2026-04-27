@@ -57,8 +57,29 @@
     </div>
   </header>
 
+  <!-- 温馨欢迎语 -->
+  <div class="welcome-banner">
+    🌸 一家四口，五一小长假，出发啦！🌸
+  </div>
+
   <!-- 家庭成员 -->
   <section class="family-section" id="family-section"></section>
+
+  <!-- 家庭合影框 -->
+  <div class="family-photo-frame">
+    <div class="family-photo-text">「 程老师 & 都老师 & 小庆 & 香香 」<br>📍 2025五一 · 山东江苏游</div>
+  </div>
+
+  <!-- 行程进度 -->
+  <div class="trip-progress">
+    <div class="trip-progress-label">
+      <span>🚗 行程进度</span>
+      <span id="progress-text">0%</span>
+    </div>
+    <div class="trip-progress-bar">
+      <div class="trip-progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
 
   <!-- 总览地图 -->
   <section class="overview-section">
@@ -95,6 +116,11 @@
   <!-- 浮动返回顶部按钮 -->
   <button class="back-to-top" id="backToTop" onclick="scrollToTop()" title="返回顶部">
     ⬆️
+  </button>
+
+  <!-- 爱心按钮 -->
+  <button class="love-button" id="loveButton" onclick="sendLove()" title="送爱心">
+    ❤️
   </button>
 
   <!-- 行程内容容器 -->
@@ -393,6 +419,13 @@
       initBackToTop();
       // 延迟加载地图，确保DOM就绪
       setTimeout(loadAmapScript, 100);
+      
+      // 初始化进度条
+      updateProgress();
+      window.addEventListener('scroll', updateProgress);
+      
+      // 初始化点击爱心
+      initClickHearts();
     });
   </script>
 </body>

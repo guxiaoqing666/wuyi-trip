@@ -290,10 +290,66 @@ function initBackToTop() {
   });
 }
 
+// 送爱心效果
+function sendLove() {
+  const hearts = ['❤️', '💖', '💕', '💗', '💝', '💘', '💓', '💞'];
+  const button = document.getElementById('loveButton');
+  if (!button) return;
+  const rect = button.getBoundingClientRect();
+  
+  for (let i = 0; i < 6; i++) {
+    setTimeout(() => {
+      const heart = document.createElement('div');
+      heart.className = 'click-heart';
+      heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+      heart.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * 60) + 'px';
+      heart.style.top = (rect.top + (Math.random() - 0.5) * 40) + 'px';
+      document.body.appendChild(heart);
+      
+      setTimeout(() => heart.remove(), 1000);
+    }, i * 100);
+  }
+}
+
+// 行程进度更新
+function updateProgress() {
+  const scrollTop = window.pageYOffset;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = Math.min(100, Math.round((scrollTop / docHeight) * 100));
+  
+  const fill = document.getElementById('progress-fill');
+  const text = document.getElementById('progress-text');
+  if (fill) fill.style.width = progress + '%';
+  if (text) text.textContent = progress + '%';
+}
+
+// 页面点击爱心效果
+function initClickHearts() {
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.love-button') || e.target.closest('.nav-btn')) return;
+    
+    const heart = document.createElement('div');
+    heart.className = 'click-heart';
+    heart.textContent = ['❤️', '✨', '💕', '🌸'][Math.floor(Math.random() * 4)];
+    heart.style.left = e.clientX + 'px';
+    heart.style.top = e.clientY + 'px';
+    document.body.appendChild(heart);
+    
+    setTimeout(() => heart.remove(), 1000);
+  });
+}
+
 // 页面加载完成后初始化
 window.addEventListener('load', () => {
   // 尝试初始化总览地图
   if (typeof AMap !== 'undefined') {
     initOverviewMap();
   }
+  
+  // 初始化进度条
+  updateProgress();
+  window.addEventListener('scroll', updateProgress);
+  
+  // 初始化点击爱心
+  initClickHearts();
 });
