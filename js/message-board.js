@@ -1,146 +1,24 @@
 // ============================================
-// 匿名留言板 - 连接本地后端服务
-// 支持匿名留言、弹幕、访问统计
+// 匿名留言板 - 使用后端 API
+// 支持：留言、点赞、删除、实时同步、在线人数
 // ============================================
 
 (function() {
   'use strict';
 
-  // 后端 API 地址
-  const API_BASE = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000/api'
-    : 'http://localhost:3000/api'; // GitHub Pages 无法直接访问 localhost
-
-  // 缓存
+  const API_BASE = 'http://localhost:3000/api';
+  const POLL_INTERVAL = 10000; // 10秒轮询
+  
   let messagesCache = [];
-  let statsCache = { totalMessages: 0, totalVisits: 0 };
+  let statsCache = {};
   let danmuTimer = null;
+  let pollTimer = null;
+  let myIP = null;
 
   // ============================================
-  // API 请求
+  // 工具函数
   // ============================================
-
-  /**
-   * 获取所有留言
-   */
-  async function fetchMessages() {
-    try {
-      const response = await fetch(`${API_BASE}/messages`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      
-      const result = await response.json();
-      if (result.success) {
-        messagesCache = result.data || [];
-        // 备份到 localStorage
-        localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
-      }
-    } catch (err) {
-      console.warn('获取留言失败:', err.message);
-      // 降级到 localStorage
-      messagesCache = JSON.parse(localStorage.getItem('wuyi_trip_messages') || '[]');
-    }
-    return messagesCache;
-  }
-
-  /**
-   * 发送留言
-   */
-  async function sendMessage(content) {
-    if (!content || content.trim().length === 0) {
-      throw new Error('留言内容不能为空');
-    }
-
-    if (content.length > 200) {
-      throw new Error('留言内容不能超过200字');
-    }
-
-    const trimmed = content.trim();
-
-    try {
-      const response = await fetch(`${API_BASE}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: trimmed })
-      });
-
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.error || '发送失败');
-      }
-
-      // 更新缓存
-      messagesCache.unshift(result.data);
-      localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
-      
-      return result.data;
-    } catch (err) {
-      console.warn('发送留言到后端失败:', err.message);
-      // 降级到 localStorage
-      const message = {
-        id: Date.now(),
-        content: trimmed,
-        createdAt: new Date().toISOString()
-      };
-      messagesCache.unshift(message);
-      localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
-      return message;
-    }
-  }
-
-  /**
-   * 记录访问
-   */
-  async function recordVisit() {
-    try {
-      await fetch(`${API_BASE}/visit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: window.location.href })
-      });
-    } catch (err) {
-      // 静默失败
-    }
-  }
-
-  /**
-   * 获取统计
-   */
-  async function fetchStats() {
-    try {
-      const response = await fetch(`${API_BASE}/stats`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) throw new Error('HTTP ' + response.status);
-      
-      const result = await response.json();
-      if (result.success && result.data) {
-        statsCache = result.data;
-      }
-    } catch (err) {
-      console.warn('获取统计失败:', err.message);
-      // 使用本地数据
-      statsCache = {
-        totalMessages: messagesCache.length,
-        totalVisits: 0
-      };
-    }
-    return statsCache;
-  }
-
-  // ============================================
-  // UI 渲染
-  // ============================================
-
-  /**
-   * 格式化时间
-   */
+  
   function formatTime(dateStr) {
     const date = new Date(dateStr);
     const now = new Date();
@@ -153,18 +31,155 @@
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
-  /**
-   * 转义 HTML
-   */
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
-  /**
-   * 渲染留言列表
-   */
+  function showToast(msg, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = 'danmu-toast';
+    toast.textContent = msg;
+    if (type === 'error') toast.style.background = '#e74c3c';
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 2000);
+  }
+
+  // ============================================
+  // API 请求
+  // ============================================
+
+  async function apiGet(path) {
+    const res = await fetch(`${API_BASE}${path}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
+
+  async function apiPost(path, body) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
+
+  async function apiDelete(path) {
+    const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
+
+  // ============================================
+  // 数据操作
+  // ============================================
+
+  async function fetchMessages() {
+    try {
+      const result = await apiGet('/messages');
+      if (result.success) {
+        messagesCache = result.data;
+        localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
+      }
+    } catch (err) {
+      console.warn('获取留言失败:', err.message);
+      messagesCache = JSON.parse(localStorage.getItem('wuyi_trip_messages') || '[]');
+    }
+    return messagesCache;
+  }
+
+  async function sendMessage(content, nickname) {
+    if (!content || content.trim().length === 0) {
+      throw new Error('留言内容不能为空');
+    }
+    if (content.length > 200) {
+      throw new Error('留言内容不能超过200字');
+    }
+
+    try {
+      const result = await apiPost('/messages', { 
+        content: content.trim(),
+        nickname: nickname || '匿名游客'
+      });
+      if (!result.success) throw new Error(result.error);
+      
+      messagesCache.unshift(result.data);
+      localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
+      return result.data;
+    } catch (err) {
+      // 降级到 localStorage
+      const message = {
+        id: Date.now(),
+        content: content.trim(),
+        nickname: nickname || '匿名游客',
+        createdAt: new Date().toISOString()
+      };
+      messagesCache.unshift(message);
+      localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
+      return message;
+    }
+  }
+
+  async function deleteMessage(id) {
+    try {
+      await apiDelete(`/messages/${id}`);
+      messagesCache = messagesCache.filter(m => m.id !== id);
+      localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
+      return true;
+    } catch (err) {
+      showToast('删除失败: ' + err.message, 'error');
+      return false;
+    }
+  }
+
+  async function likeMessage(id) {
+    try {
+      const result = await apiPost(`/messages/${id}/like`);
+      if (result.success) {
+        // 更新本地缓存
+        const msg = messagesCache.find(m => m.id === id);
+        if (msg) {
+          msg.likes = result.data.likes;
+          msg.likedByMe = result.data.liked;
+        }
+        return result.data;
+      }
+    } catch (err) {
+      console.warn('点赞失败:', err.message);
+    }
+    return null;
+  }
+
+  async function fetchStats() {
+    try {
+      const result = await apiGet('/stats');
+      if (result.success) {
+        statsCache = result.data;
+      }
+    } catch (err) {
+      console.warn('获取统计失败:', err.message);
+    }
+    return statsCache;
+  }
+
+  async function recordVisit() {
+    try {
+      await apiPost('/visit', { url: window.location.href });
+    } catch (err) {
+      // 静默失败
+    }
+  }
+
+  // ============================================
+  // UI 渲染
+  // ============================================
+
   function renderMessageBoard() {
     const container = document.getElementById('message-board-list');
     if (!container) return;
@@ -174,26 +189,38 @@
       return;
     }
 
-    container.innerHTML = messagesCache.slice(0, 50).map(msg => `
-      <div class="message-item">
-        <div class="message-content">${escapeHtml(msg.content)}</div>
-        <div class="message-time">${formatTime(msg.createdAt)}</div>
-      </div>
-    `).join('');
+    container.innerHTML = messagesCache.slice(0, 50).map(msg => {
+      const canDelete = msg.ip === myIP || !msg.ip; // 自己的或本地存储的
+      const likeClass = msg.likedByMe ? 'liked' : '';
+      
+      return `
+        <div class="message-item" data-id="${msg.id}">
+          <div class="message-header">
+            <span class="message-nickname">${escapeHtml(msg.nickname || '匿名')}</span>
+            <span class="message-time">${formatTime(msg.createdAt)}</span>
+          </div>
+          <div class="message-content">${escapeHtml(msg.content)}</div>
+          <div class="message-actions">
+            <button class="like-btn ${likeClass}" onclick="MessageBoard.like(${msg.id})">
+              ❤️ <span>${msg.likes || 0}</span>
+            </button>
+            ${canDelete ? `<button class="delete-btn" onclick="MessageBoard.delete(${msg.id})">🗑️</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
-  /**
-   * 更新统计显示
-   */
   function updateStatsDisplay() {
     const msgEl = document.getElementById('statsMessages');
     const visitEl = document.getElementById('statsVisits');
+    const onlineEl = document.getElementById('statsOnline');
     const badge = document.getElementById('messageBadge');
     
     if (msgEl) msgEl.textContent = statsCache.totalMessages || messagesCache.length;
     if (visitEl) visitEl.textContent = statsCache.totalVisits || 0;
+    if (onlineEl) onlineEl.textContent = statsCache.onlineNow || 0;
     
-    // 更新角标
     if (badge) {
       const count = messagesCache.length;
       if (count > 0) {
@@ -207,9 +234,6 @@
   // 弹幕
   // ============================================
 
-  /**
-   * 显示单条弹幕
-   */
   function showDanmu(text, isNew = false) {
     const container = document.getElementById('danmuContainer');
     if (!container) return;
@@ -229,60 +253,51 @@
     setTimeout(() => danmu.remove(), 8000);
   }
 
-  /**
-   * 启动弹幕轮播
-   */
   function startDanmuPlayback() {
-    // 先停止旧的
-    if (danmuTimer) {
-      clearInterval(danmuTimer);
-      danmuTimer = null;
-    }
+    if (danmuTimer) clearInterval(danmuTimer);
 
-    // 合并默认弹幕和留言
     const defaultDanmus = [
-      '小庆开车稳！🚗',
-      '都老师今天吃什么？🍜',
-      '香香拍照好看！📸',
-      '程老师注意休息⛽',
-      '海边风好大💨',
-      '咸鸭蛋真香🥚',
-      '小庆开车辛苦了💪',
-      '香香替换让小庆歇会儿👍',
-      '安全第一！🛡️',
-      '五一快乐！🎉'
+      '小庆开车稳！🚗', '都老师今天吃什么？🍜', '香香拍照好看！📸',
+      '程老师注意休息⛽', '海边风好大💨', '咸鸭蛋真香🥚',
+      '小庆开车辛苦了💪', '安全第一！🛡️', '五一快乐！🎉'
     ];
 
-    const messageTexts = messagesCache.map(m => m.content).filter(t => t.length <= 30);
-    const allDanmus = [...messageTexts, ...defaultDanmus];
+    const messageTexts = messagesCache
+      .filter(m => m.content.length <= 30)
+      .map(m => m.content);
     
+    const allDanmus = [...messageTexts, ...defaultDanmus];
     if (allDanmus.length === 0) return;
 
     let index = 0;
     const shuffled = [...allDanmus].sort(() => Math.random() - 0.5);
     
     const playNext = () => {
-      if (index < shuffled.length) {
-        showDanmu(shuffled[index]);
-        index++;
-      } else {
-        index = 0;
-      }
+      showDanmu(shuffled[index % shuffled.length]);
+      index++;
     };
 
     playNext();
     danmuTimer = setInterval(playNext, 3000);
-    return danmuTimer;
   }
 
-  /**
-   * 停止弹幕
-   */
-  function stopDanmu() {
-    if (danmuTimer) {
-      clearInterval(danmuTimer);
-      danmuTimer = null;
-    }
+  // ============================================
+  // 实时同步
+  // ============================================
+
+  function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    
+    pollTimer = setInterval(async () => {
+      // 只在留言板打开时刷新
+      const panel = document.getElementById('messageBoardPanel');
+      if (panel && panel.classList.contains('active')) {
+        await fetchMessages();
+        renderMessageBoard();
+        await fetchStats();
+        updateStatsDisplay();
+      }
+    }, POLL_INTERVAL);
   }
 
   // ============================================
@@ -291,23 +306,21 @@
 
   async function init() {
     try {
-      // 获取留言
+      // 获取本机 IP（用于判断能否删除）
+      try {
+        const health = await apiGet('/health');
+        myIP = health.data?.myIP || 'local';
+      } catch {}
+      
       await fetchMessages();
-      
-      // 获取统计
       await fetchStats();
-      
-      // 渲染
       renderMessageBoard();
       updateStatsDisplay();
-      
-      // 记录访问
       recordVisit();
-      
-      // 启动弹幕
       startDanmuPlayback();
+      startPolling();
       
-      console.log('✅ 留言板初始化完成，留言数:', messagesCache.length);
+      console.log('✅ 留言板初始化完成');
     } catch (err) {
       console.warn('留言板初始化失败:', err);
     }
@@ -317,14 +330,15 @@
   // 公开 API
   // ============================================
   window.MessageBoard = {
-    init: init,
+    init,
     send: sendMessage,
+    delete: deleteMessage,
+    like: likeMessage,
     fetch: fetchMessages,
     render: renderMessageBoard,
     updateStats: updateStatsDisplay,
-    showDanmu: showDanmu,
+    showDanmu,
     startDanmu: startDanmuPlayback,
-    stopDanmu: stopDanmu,
     getMessages: () => messagesCache,
     getStats: () => statsCache
   };

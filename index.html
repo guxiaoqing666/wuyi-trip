@@ -204,6 +204,7 @@
     <div class="message-board-stats" id="messageBoardStats">
       <span>💬 <b id="statsMessages">0</b> 条留言</span>
       <span>👀 <b id="statsVisits">0</b> 次访问</span>
+      <span>🟢 <b id="statsOnline">0</b> 人在线</span>
     </div>
     
     <!-- 留言列表 -->
@@ -212,9 +213,12 @@
     </div>
     
     <!-- 发送留言 -->
-    <div class="message-board-input">
-      <input type="text" id="boardMessageInput" placeholder="写一条留言..." maxlength="200">
-      <button onclick="sendBoardMessage()">发送</button>
+    <div class="message-board-input-area">
+      <input type="text" id="boardNicknameInput" placeholder="昵称（可选）" maxlength="20" class="nickname-input">
+      <div class="message-board-input">
+        <input type="text" id="boardMessageInput" placeholder="写一条留言..." maxlength="200">
+        <button onclick="sendBoardMessage()">发送</button>
+      </div>
     </div>
   </div>
 
@@ -849,12 +853,15 @@
     // 发送留言板消息
     async function sendBoardMessage() {
       const input = document.getElementById('boardMessageInput');
+      const nicknameInput = document.getElementById('boardNicknameInput');
       const text = input.value.trim();
       if (!text) return;
       
+      const nickname = nicknameInput.value.trim() || '匿名游客';
+      
       if (window.MessageBoard) {
         try {
-          await MessageBoard.send(text);
+          await MessageBoard.send(text, nickname);
           input.value = '';
           MessageBoard.render();
           MessageBoard.updateStats();
