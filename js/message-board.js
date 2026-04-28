@@ -6,7 +6,9 @@
 (function() {
   'use strict';
 
-  const API_BASE = 'http://localhost:3000/api';
+  const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api'
+    : 'http://localhost:3000/api';
   const POLL_INTERVAL = 10000; // 10秒轮询
   
   let messagesCache = [];
