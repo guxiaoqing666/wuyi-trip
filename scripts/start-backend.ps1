@@ -67,9 +67,7 @@ $proc = Start-Process -FilePath "node" `
     -ArgumentList "server.js" `
     -WorkingDirectory $BACKEND_DIR `
     -WindowStyle Hidden `
-    -PassThru `
-    -RedirectStandardOutput $LOG_FILE `
-    -RedirectStandardError $LOG_FILE
+    -PassThru
 
 # 保存 PID
 $proc.Id | Out-File -FilePath $PID_FILE -Force

@@ -1,0 +1,14 @@
+{
+  "name": "wuyi-trip-backend",
+  "version": "1.0.0",
+  "description": "武夷自驾游行程网页后端服务",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true
+}
