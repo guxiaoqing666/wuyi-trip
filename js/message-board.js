@@ -1,48 +1,35 @@
 // ============================================
-// 匿名留言板 - 纯 localStorage 实现
-// 无需后端，数据存在浏览器本地
+// 匿名留言板 - 连接本地后端服务
+// 支持匿名留言，数据存在你的电脑上
 // ============================================
 
 (function() {
   'use strict';
 
-  const STORAGE_KEY = 'wuyi_trip_messages_v2';
-  const MAX_MESSAGES = 100;
+  // 后端 API 地址
+  // 本地开发用 localhost，部署后需要改为你的内网IP或公网地址
+  const API_BASE = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api'
+    : 'http://localhost:3000/api'; // 部署后需要修改
 
   // 缓存
   let messagesCache = [];
 
   /**
-   * 从localStorage读取
-   */
-  function loadFromStorage() {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY);
-      if (data) {
-        messagesCache = JSON.parse(data);
-      }
-    } catch (err) {
-      console.warn('读取留言失败:', err);
-      messagesCache = [];
-    }
-  }
-
-  /**
-   * 保存到localStorage
-   */
-  function saveToStorage() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messagesCache));
-    } catch (err) {
-      console.warn('保存留言失败:', err);
-    }
-  }
-
-  /**
    * 获取所有留言
    */
   async function fetchMessages() {
-    loadFromStorage();
+    try {
+      const response = await fetch(`${API_BASE}/messages`);
+      const result = await response.json();
+      if (result.success) {
+        messagesCache = result.data;
+      }
+    } catch (err) {
+      console.warn('获取留言失败:', err);
+      // 降级到 localStorage
+      messagesCache = JSON.parse(localStorage.getItem('wuyi_trip_messages') || '[]');
+    }
     return messagesCache;
   }
 
@@ -54,25 +41,57 @@
       throw new Error('留言内容不能为空');
     }
 
-    if (content.length > 100) {
-      throw new Error('留言内容不能超过100字');
+    if (content.length > 200) {
+      throw new Error('留言内容不能超过200字');
     }
 
-    const message = {
-      id: Date.now(),
-      content: content.trim(),
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const response = await fetch(`${API_BASE}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: content.trim() })
+      });
 
-    messagesCache.unshift(message);
-    
-    // 限制数量
-    if (messagesCache.length > MAX_MESSAGES) {
-      messagesCache = messagesCache.slice(0, MAX_MESSAGES);
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || '发送失败');
+      }
+
+      // 更新缓存
+      messagesCache.unshift(result.data);
+      
+      // 同时备份到 localStorage
+      localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
+      
+      return result.data;
+    } catch (err) {
+      console.warn('发送留言失败:', err);
+      // 降级到 localStorage
+      const message = {
+        id: Date.now(),
+        content: content.trim(),
+        createdAt: new Date().toISOString()
+      };
+      messagesCache.unshift(message);
+      localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
+      return message;
     }
-    
-    saveToStorage();
-    return message;
+  }
+
+  /**
+   * 记录访问
+   */
+  async function recordVisit() {
+    try {
+      await fetch(`${API_BASE}/visit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: window.location.href })
+      });
+    } catch (err) {
+      // 静默失败
+    }
   }
 
   /**
@@ -141,7 +160,7 @@
     if (!container) return;
 
     if (messagesCache.length === 0) {
-      container.innerHTML = '<div class="message-empty">暂无留言，快来抢沙发~<br><small>（留言只保存在当前设备）</small></div>';
+      container.innerHTML = '<div class="message-empty">暂无留言，快来抢沙发~</div>';
       return;
     }
 
@@ -164,8 +183,11 @@
    */
   async function init() {
     try {
-      loadFromStorage();
+      await fetchMessages();
       renderMessageBoard();
+      
+      // 记录访问
+      recordVisit();
       
       // 启动弹幕播放
       const danmuTimer = startDanmuPlayback();
