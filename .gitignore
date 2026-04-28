@@ -1,12 +1,15 @@
-# 依赖和可执行文件
+# 可执行文件
+cloudflared.exe
 *.exe
+
+# 依赖
 node_modules/
 
-# 数据文件（运行时生成）
+# 运行时数据文件
 data/*.json
 data/*.log
+data/*.pid
+data/*.url
 
 # 临时文件
 *.tmp
-*.pid
-*.url
