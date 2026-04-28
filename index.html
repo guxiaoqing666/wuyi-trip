@@ -185,22 +185,20 @@
     </div>
   </section>
 
-  <!-- 留言板（隐藏入口） -->
+  <!-- Giscus 留言板（隐藏入口） -->
   <div class="message-board-trigger" onclick="toggleMessageBoard()">
     <span>💬</span>
   </div>
   
   <div class="message-board-panel" id="messageBoardPanel">
     <div class="message-board-header">
-      <h3>💬 匿名留言板</h3>
+      <h3>💬 留言板（Giscus）</h3>
       <button onclick="toggleMessageBoard()">✕</button>
     </div>
     <div class="message-board-desc">
-      <small>留言会显示为弹幕，所有人都能看到~</small>
+      <small>使用GitHub账号留言，所有人都能看到~</small>
     </div>
-    <div class="message-board-list" id="message-board-list">
-      <div class="message-loading">加载中...</div>
-    </div>
+    <div class="giscus-container" id="giscus-container"></div>
   </div>
 
   <!-- 页脚 -->
@@ -821,9 +819,6 @@
       const panel = document.getElementById('messageBoardPanel');
       if (panel) {
         panel.classList.toggle('active');
-        if (panel.classList.contains('active') && window.MessageBoard) {
-          MessageBoard.render();
-        }
       }
     }
     
@@ -1231,6 +1226,24 @@
         MessageBoard.init();
       }
     });
+  </script>
+  
+  <!-- Giscus 留言板脚本 -->
+  <script src="https://giscus.app/client.js"
+    data-repo="guxiaoqing666/wuyi-trip"
+    data-repo-id="R_kgDOSNeFMg"
+    data-category="Announcements"
+    data-category-id="DIC_kwDOSNeFMs4C72KK"
+    data-mapping="pathname"
+    data-strict="0"
+    data-reactions-enabled="1"
+    data-emit-metadata="1"
+    data-input-position="top"
+    data-theme="preferred_color_scheme"
+    data-lang="zh-CN"
+    data-loading="lazy"
+    crossorigin="anonymous"
+    async>
   </script>
 </body>
 </html>
