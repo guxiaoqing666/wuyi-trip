@@ -35,30 +35,28 @@ jobs:
       - name: Stop existing backend
         shell: cmd
         run: |
-          taskkill /F /IM node.exe /FI "WINDOWTITLE eq *server.js*" 2>nul
           taskkill /F /IM node.exe 2>nul
           timeout /t 2 /nobreak >nul
 
       - name: Start backend
         shell: cmd
         run: |
-          start /B node "%USERPROFILE%\wuyi-trip\backend\server.js"
+          cd backend
+          start /min node server.js
           timeout /t 3 /nobreak >nul
 
       - name: Health check
         shell: cmd
         run: |
-          curl -s http://localhost:3000/api/health || (
-            echo Waiting for backend...
+          curl -s http://localhost:3000/api/health >nul
+          if errorlevel 1 (
             timeout /t 3 /nobreak >nul
-            curl -s http://localhost:3000/api/health || (
-              echo Backend failed to start
-              exit 1
-            )
+            curl -s http://localhost:3000/api/health >nul
+            if errorlevel 1 exit 1
           )
 
       - name: Verify APIs
         shell: cmd
         run: |
-          curl -s http://localhost:3000/api/messages >nul && echo OK: /api/messages
-          curl -s http://localhost:3000/api/stats >nul && echo OK: /api/stats
+          curl -s http://localhost:3000/api/messages >nul
+          curl -s http://localhost:3000/api/stats >nul
