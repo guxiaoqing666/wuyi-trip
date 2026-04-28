@@ -1,0 +1,12 @@
+# 依赖和可执行文件
+*.exe
+node_modules/
+
+# 数据文件（运行时生成）
+data/*.json
+data/*.log
+
+# 临时文件
+*.tmp
+*.pid
+*.url
