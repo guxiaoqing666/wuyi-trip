@@ -185,20 +185,37 @@
     </div>
   </section>
 
-  <!-- Giscus 留言板（隐藏入口） -->
+  <!-- 留言板入口 -->
   <div class="message-board-trigger" onclick="toggleMessageBoard()">
     <span>💬</span>
+    <span class="message-board-badge" id="messageBadge"></span>
   </div>
   
   <div class="message-board-panel" id="messageBoardPanel">
     <div class="message-board-header">
-      <h3>💬 留言板（Giscus）</h3>
+      <h3>💬 匿名留言板</h3>
       <button onclick="toggleMessageBoard()">✕</button>
     </div>
     <div class="message-board-desc">
-      <small>使用GitHub账号留言，所有人都能看到~</small>
+      <small>✨ 发送弹幕即留言，数据保存在本地服务器</small>
     </div>
-    <div class="giscus-container" id="giscus-container"></div>
+    
+    <!-- 统计信息 -->
+    <div class="message-board-stats" id="messageBoardStats">
+      <span>💬 <b id="statsMessages">0</b> 条留言</span>
+      <span>👀 <b id="statsVisits">0</b> 次访问</span>
+    </div>
+    
+    <!-- 留言列表 -->
+    <div class="message-board-list" id="message-board-list">
+      <div class="message-empty">加载中...</div>
+    </div>
+    
+    <!-- 发送留言 -->
+    <div class="message-board-input">
+      <input type="text" id="boardMessageInput" placeholder="写一条留言..." maxlength="200">
+      <button onclick="sendBoardMessage()">发送</button>
+    </div>
   </div>
 
   <!-- 页脚 -->
@@ -819,8 +836,58 @@
       const panel = document.getElementById('messageBoardPanel');
       if (panel) {
         panel.classList.toggle('active');
+        // 打开时刷新数据
+        if (panel.classList.contains('active') && window.MessageBoard) {
+          MessageBoard.fetch().then(() => {
+            MessageBoard.render();
+            MessageBoard.updateStats();
+          });
+        }
       }
     }
+    
+    // 发送留言板消息
+    async function sendBoardMessage() {
+      const input = document.getElementById('boardMessageInput');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      if (window.MessageBoard) {
+        try {
+          await MessageBoard.send(text);
+          input.value = '';
+          MessageBoard.render();
+          MessageBoard.updateStats();
+          showToast('✅ 留言已发送');
+          
+          // 也显示为弹幕
+          const container = document.getElementById('danmuContainer');
+          if (container) {
+            const danmu = document.createElement('div');
+            danmu.className = 'danmu-item';
+            danmu.textContent = text;
+            danmu.style.top = Math.random() * 80 + 'px';
+            danmu.style.color = '#e74c3c';
+            danmu.style.background = 'rgba(255, 235, 238, 0.9)';
+            danmu.style.border = '1px solid #ffcdd2';
+            container.appendChild(danmu);
+            setTimeout(() => danmu.remove(), 8000);
+          }
+        } catch (err) {
+          showToast('❌ ' + err.message);
+        }
+      }
+    }
+    
+    // 回车发送
+    document.addEventListener('DOMContentLoaded', function() {
+      const boardInput = document.getElementById('boardMessageInput');
+      if (boardInput) {
+        boardInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') sendBoardMessage();
+        });
+      }
+    });
     
     // 渲染天气预报员（显示5天预报概览）
     function renderWeatherNews() {
@@ -1228,22 +1295,6 @@
     });
   </script>
   
-  <!-- Giscus 留言板脚本 -->
-  <script src="https://giscus.app/client.js"
-    data-repo="guxiaoqing666/wuyi-trip"
-    data-repo-id="R_kgDOSNeFMg"
-    data-category="Announcements"
-    data-category-id="DIC_kwDOSNeFMs4C72KK"
-    data-mapping="pathname"
-    data-strict="0"
-    data-reactions-enabled="1"
-    data-emit-metadata="1"
-    data-input-position="top"
-    data-theme="preferred_color_scheme"
-    data-lang="zh-CN"
-    data-loading="lazy"
-    crossorigin="anonymous"
-    async>
-  </script>
+  <!-- 留言板功能已由 message-board.js 提供 -->
 </body>
 </html>
