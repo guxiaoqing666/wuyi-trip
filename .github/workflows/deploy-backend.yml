@@ -31,14 +31,12 @@ jobs:
         run: taskkill /F /IM node.exe
         continue-on-error: true
 
-      - name: Start backend
-        shell: cmd
-        working-directory: backend
-        run: start node server.js
-
-      - name: Wait for startup
-        shell: cmd
-        run: ping 127.0.0.1 -n 4
+      - name: Start backend in background
+        shell: powershell
+        run: |
+          $proc = Start-Process -FilePath "node" -ArgumentList "server.js" -WorkingDirectory "backend" -PassThru
+          Write-Host "Started PID: $($proc.Id)"
+          Start-Sleep -Seconds 3
 
       - name: Health check
         shell: cmd
