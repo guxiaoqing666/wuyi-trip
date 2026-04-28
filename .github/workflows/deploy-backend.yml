@@ -18,114 +18,41 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check Java
-        shell: powershell
+        shell: cmd
         run: java -version
 
       - name: Ensure data directory
-        shell: powershell
-        run: |
-          $dataDir = "$env:USERPROFILE\wuyi-trip\data"
-          if (!(Test-Path $dataDir)) {
-            New-Item -ItemType Directory -Path $dataDir -Force
-          }
+        shell: cmd
+        run: if not exist "%USERPROFILE%\wuyi-trip\data" mkdir "%USERPROFILE%\wuyi-trip\data"
 
       - name: Stop existing backend
-        shell: powershell
+        shell: cmd
         run: |
-          # 停止 Java 后端
-          Get-CimInstance Win32_Process | Where-Object { 
-            $_.Name -eq 'java.exe' -and $_.CommandLine -like '*wuyi-trip*'
-          } | ForEach-Object {
-            Write-Host "Stopping Java PID $($_.ProcessId)"
-            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-          }
-          
-          # 停止 Node 后端（兼容旧版本）
-          Get-CimInstance Win32_Process | Where-Object { 
-            $_.Name -eq 'node.exe' -and $_.CommandLine -like '*server.js*'
-          } | ForEach-Object {
-            Write-Host "Stopping Node PID $($_.ProcessId)"
-            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-          }
-          
-          # 释放端口 3000
-          Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object {
-            Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
-          }
-          
-          Start-Sleep -Seconds 2
-          Write-Host "Old backend stopped"
+          taskkill /F /IM java.exe 2>nul
+          taskkill /F /IM node.exe 2>nul
+          ping 127.0.0.1 -n 3 >nul
 
       - name: Start Java backend
-        shell: powershell
+        shell: cmd
         run: |
-          $jarPath = Resolve-Path "java-backend\target\wuyi-trip-backend-1.0.0.jar"
-          $libPath = Resolve-Path "java-backend\lib"
-          Write-Host "Starting: $jarPath"
-          
-          # 构建 classpath
-          $jars = Get-ChildItem "$libPath\*.jar" | ForEach-Object { $_.FullName }
-          $cp = "$jarPath;" + ($jars -join ";")
-          
-          # 使用 WMI 创建独立进程（脱离当前会话）
-          $startupInfo = New-Object System.Diagnostics.ProcessStartInfo
-          $startupInfo.FileName = "java"
-          $startupInfo.Arguments = "-cp `"$cp`" com.wuyi.trip.Application"
-          $startupInfo.WorkingDirectory = "$env:USERPROFILE\wuyi-trip"
-          $startupInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
-          $startupInfo.CreateNoWindow = $true
-          $startupInfo.UseShellExecute = $false
-          
-          $process = [System.Diagnostics.Process]::Start($startupInfo)
-          Write-Host "Started Java backend PID: $($process.Id)"
-          
-          # 保存 PID
-          $process.Id | Out-File -FilePath "$env:USERPROFILE\wuyi-trip\data\backend.pid" -Force
-          
-          Start-Sleep -Seconds 5
+          cd java-backend
+          set CP=target\wuyi-trip-backend-1.0.0.jar
+          for %%j in (lib\*.jar) do set CP=!CP!;%%j
+          start /min java -cp "!CP!" com.wuyi.trip.Application
+          ping 127.0.0.1 -n 6 >nul
 
       - name: Health check
-        shell: powershell
+        shell: cmd
         run: |
-          $retries = 0
-          $maxRetries = 10
-          $healthy = $false
-          
-          while ($retries -lt $maxRetries -and !$healthy) {
-            try {
-              $res = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 3
-              if ($res.StatusCode -eq 200) {
-                $healthy = $true
-                Write-Host "✅ Backend healthy: $($res.Content)"
-              }
-            } catch {
-              $retries++
-              Write-Host "Retry $retries/$maxRetries..."
-              Start-Sleep -Seconds 2
-            }
-          }
-          
-          if (!$healthy) {
-            throw "Backend failed to start"
-          }
+          curl -s http://localhost:3000/api/health >nul
+          if errorlevel 1 (
+            ping 127.0.0.1 -n 4 >nul
+            curl -s http://localhost:3000/api/health >nul
+            if errorlevel 1 exit 1
+          )
 
       - name: Verify APIs
-        shell: powershell
+        shell: cmd
         run: |
-          $messages = Invoke-WebRequest -Uri "http://localhost:3000/api/messages" -UseBasicParsing
-          Write-Host "✅ /api/messages OK ($($messages.StatusCode))"
-          
-          $stats = Invoke-WebRequest -Uri "http://localhost:3000/api/stats" -UseBasicParsing
-          Write-Host "✅ /api/stats OK ($($stats.StatusCode))"
-
-      - name: Show process info
-        shell: powershell
-        run: |
-          $pidFile = "$env:USERPROFILE\wuyi-trip\data\backend.pid"
-          if (Test-Path $pidFile) {
-            $pid = Get-Content $pidFile
-            $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
-            if ($proc) {
-              Write-Host "✅ Java backend running: PID $pid, Memory $([math]::Round($proc.WorkingSet64/1MB,1)) MB"
-            }
-          }
+          curl -s http://localhost:3000/api/messages >nul
+          curl -s http://localhost:3000/api/stats >nul

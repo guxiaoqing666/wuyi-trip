@@ -202,10 +202,11 @@
     
     <!-- 后端配置 -->
     <div class="message-board-config" id="messageBoardConfig">
-      <input type="text" id="backendUrlInput" placeholder="后端地址，如: http://localhost:3000/api" value="">
-      <button onclick="saveBackendUrl()">连接</button>
+      <div style="font-size:12px;color:#666;margin-bottom:6px;">💡 后端地址配置</div>
+      <input type="text" id="backendUrlInput" placeholder="如: http://192.168.1.100:3000/api" value="">
+      <button onclick="saveBackendUrl()">保存</button>
     </div>
-    <div class="message-board-config-status" id="backendStatus"></div>
+    <div class="message-board-config-status" id="backendStatus" style="font-size:12px;color:#27ae60;padding:4px 0;"></div>
     
     <!-- 统计信息 -->
     <div class="message-board-stats" id="messageBoardStats">
@@ -873,6 +874,9 @@
       const saved = localStorage.getItem('wuyi_backend_url');
       if (saved) {
         document.getElementById('backendUrlInput').value = saved;
+        document.getElementById('backendStatus').textContent = '当前: ' + saved;
+      } else {
+        document.getElementById('backendStatus').textContent = '默认: http://localhost:3000/api';
       }
     }
     

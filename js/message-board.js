@@ -1,21 +1,15 @@
 // ============================================
-// 匿名留言板 - 支持本地和远程后端
+// 匿名留言板 - 支持配置后端地址
 // ============================================
 
 (function() {
   'use strict';
 
-  // API 配置 - 修改这里切换后端地址
-  // 本地开发: http://localhost:3000/api
-  // 远程地址: 你的 ngrok/serveo 地址
+  // 从 localStorage 读取后端地址，或使用默认
   const API_BASE = (function() {
-    // 如果本地后端可用，优先使用本地
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:3000/api';
-    }
-    // GitHub Pages 或其他环境，尝试连接本地后端（需要内网穿透）
-    // 如果有公网地址，修改这里：
-    // return 'https://你的地址.com/api';
+    var saved = localStorage.getItem('wuyi_backend_url');
+    if (saved) return saved;
+    // 默认本地地址
     return 'http://localhost:3000/api';
   })();
 
@@ -67,16 +61,6 @@
     const res = await fetch(API_BASE + path, options);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
-  }
-
-  // 检查后端是否可用
-  async function checkBackend() {
-    try {
-      const res = await fetch(API_BASE + '/health', { method: 'GET', timeout: 3000 });
-      return res.ok;
-    } catch (e) {
-      return false;
-    }
   }
 
   // 数据操作
@@ -294,7 +278,7 @@
       startDanmuPlayback();
       startPolling();
       
-      console.log('✅ 留言板初始化完成');
+      console.log('✅ 留言板初始化完成，后端地址:', API_BASE);
     } catch (err) {
       console.warn('留言板初始化失败:', err);
     }
