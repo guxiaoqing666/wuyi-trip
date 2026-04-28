@@ -129,9 +129,9 @@ const TRIP_DATA = {
       distance: "约373km",
       driveTime: "约4.5小时（含高邮停留）",
       hotel: {
-        name: "连岛海景酒店/民宿",
-        area: "连云港连岛景区",
-        tip: "提前预订，五一海边住宿紧张"
+        name: "连云港市区连锁酒店",
+        area: "海州区/万达广场附近",
+        tip: "自驾推荐住市区！连锁酒店性价比高，到连岛20分钟车程。推荐：全季、亚朵、桔子水晶"
       },
       schedule: [
         {
@@ -252,9 +252,9 @@ const TRIP_DATA = {
       distance: "岛内+往返约40km",
       driveTime: "轻松",
       hotel: {
-        name: "连岛海景酒店/民宿",
-        area: "连云港连岛景区",
-        tip: "不换酒店，省心"
+        name: "连云港市区连锁酒店",
+        area: "海州区/万达广场附近",
+        tip: "连住2晚不换酒店，市区吃饭选择多，价格比海边便宜一半"
       },
       schedule: [
         {
@@ -343,9 +343,9 @@ const TRIP_DATA = {
       distance: "约82km",
       driveTime: "约1小时",
       hotel: {
-        name: "万平口附近海边酒店",
-        area: "日照万平口风景区",
-        tip: "选海景房，早上看日出"
+        name: "日照市区/大学城酒店",
+        area: "日照市区或大学城附近",
+        tip: "自驾推荐住市区！价格便宜一半，到海边10分钟。推荐：万象汇周边，吃饭方便"
       },
       schedule: [
         {
@@ -447,9 +447,9 @@ const TRIP_DATA = {
       distance: "约326km",
       driveTime: "约3.5-4小时",
       hotel: {
-        name: "徐州市中心/云龙区酒店",
-        area: "徐州市云龙区",
-        tip: "位置核心，方便第二天出发"
+        name: "徐州铜山区/地铁沿线酒店",
+        area: "铜山区或地铁1号线沿线",
+        tip: "自驾住铜山区性价比高，到市区景点15分钟，停车方便，价格便宜"
       },
       schedule: [
         {
