@@ -1,100 +1,48 @@
 // ============================================
-// 匿名留言板 - JSONBin.io API
-// 无需注册，免费使用，简单REST API
+// 匿名留言板 - 纯 localStorage 实现
+// 无需后端，数据存在浏览器本地
 // ============================================
 
 (function() {
   'use strict';
 
-  // JSONBin.io 配置
-  // 使用公共的 bin（任何人可读写）
-  const JSONBIN_API_KEY = '$2a$10$YourApiKeyHere'; // 免费版可以留空或填任意值
-  const JSONBIN_BIN_ID = 'wuyi_trip_messages_v1'; // 自定义bin ID
-  const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
-  
-  // 备用：使用 jsonblob.com（更简单，无需key）
-  const JSONBLOB_BASE = 'https://jsonblob.com/api/jsonBlob';
-  
+  const STORAGE_KEY = 'wuyi_trip_messages_v2';
+  const MAX_MESSAGES = 100;
+
   // 缓存
   let messagesCache = [];
-  let blobId = null; // jsonblob的ID
 
   /**
-   * 初始化：创建或获取存储blob
+   * 从localStorage读取
    */
-  async function initStorage() {
+  function loadFromStorage() {
     try {
-      // 尝试从localStorage读取已有的blobId
-      blobId = localStorage.getItem('wuyi_trip_blob_id');
-      
-      if (blobId) {
-        // 尝试读取已有数据
-        const response = await fetch(`${JSONBLOB_BASE}/${blobId}`);
-        if (response.ok) {
-          const data = await response.json();
-          messagesCache = data.messages || [];
-          return;
-        }
-      }
-      
-      // 创建新的blob
-      const response = await fetch(JSONBLOB_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [] })
-      });
-      
-      if (response.ok) {
-        // 从Location头获取blobId
-        const location = response.headers.get('Location');
-        if (location) {
-          blobId = location.split('/').pop();
-          localStorage.setItem('wuyi_trip_blob_id', blobId);
-        }
-        messagesCache = [];
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (data) {
+        messagesCache = JSON.parse(data);
       }
     } catch (err) {
-      console.warn('初始化存储失败:', err);
-      // 降级到纯localStorage
-      messagesCache = JSON.parse(localStorage.getItem('wuyi_trip_messages') || '[]');
+      console.warn('读取留言失败:', err);
+      messagesCache = [];
     }
   }
 
   /**
-   * 保存数据到blob
+   * 保存到localStorage
    */
-  async function saveStorage() {
-    if (!blobId) return;
-    
+  function saveToStorage() {
     try {
-      await fetch(`${JSONBLOB_BASE}/${blobId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: messagesCache })
-      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messagesCache));
     } catch (err) {
-      console.warn('保存到云端失败:', err);
+      console.warn('保存留言失败:', err);
     }
-    
-    // 同时保存到localStorage作为备份
-    localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
   }
 
   /**
    * 获取所有留言
    */
   async function fetchMessages() {
-    // 优先从缓存返回
-    if (messagesCache.length > 0) {
-      return messagesCache;
-    }
-    
-    // 尝试从localStorage恢复
-    const local = localStorage.getItem('wuyi_trip_messages');
-    if (local) {
-      messagesCache = JSON.parse(local);
-    }
-    
+    loadFromStorage();
     return messagesCache;
   }
 
@@ -118,12 +66,12 @@
 
     messagesCache.unshift(message);
     
-    // 限制存储数量（保留最近100条）
-    if (messagesCache.length > 100) {
-      messagesCache = messagesCache.slice(0, 100);
+    // 限制数量
+    if (messagesCache.length > MAX_MESSAGES) {
+      messagesCache = messagesCache.slice(0, MAX_MESSAGES);
     }
     
-    await saveStorage();
+    saveToStorage();
     return message;
   }
 
@@ -193,7 +141,7 @@
     if (!container) return;
 
     if (messagesCache.length === 0) {
-      container.innerHTML = '<div class="message-empty">暂无留言，快来抢沙发~</div>';
+      container.innerHTML = '<div class="message-empty">暂无留言，快来抢沙发~<br><small>（留言只保存在当前设备）</small></div>';
       return;
     }
 
@@ -216,7 +164,7 @@
    */
   async function init() {
     try {
-      await initStorage();
+      loadFromStorage();
       renderMessageBoard();
       
       // 启动弹幕播放
