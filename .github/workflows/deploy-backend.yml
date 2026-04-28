@@ -5,7 +5,6 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
-      - 'scripts/**'
       - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
@@ -18,154 +17,98 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        working-directory: ./backend
-        run: npm install
-
-      - name: Ensure data directory exists
+      - name: Check Node.js
         shell: powershell
         run: |
-          $dataDir = "C:\Users\simba\wuyi-trip\data"
+          $node = Get-Command node -ErrorAction SilentlyContinue
+          if (!$node) {
+            Write-Error "Node.js not found!"
+            exit 1
+          }
+          node --version
+
+      - name: Install dependencies
+        shell: powershell
+        run: |
+          cd backend
+          if (Test-Path package.json) {
+            npm install
+          }
+
+      - name: Ensure data directory
+        shell: powershell
+        run: |
+          $dataDir = "$env:USERPROFILE\wuyi-trip\data"
           if (!(Test-Path $dataDir)) {
-            New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
-            Write-Host "Created data directory"
+            New-Item -ItemType Directory -Path $dataDir -Force
           }
 
       - name: Stop existing backend
         shell: powershell
         run: |
-          # 通过 PID 文件停止
-          $pidFile = "C:\Users\simba\wuyi-trip\data\backend.pid"
-          if (Test-Path $pidFile) {
-            $pid = Get-Content $pidFile -Raw
-            $pid = $pid.Trim()
-            $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
-            if ($proc) {
-              Stop-Process -Id $pid -Force
-              Write-Host "Stopped process from PID file: $pid"
-            }
-            Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+          # 查找并停止 node server.js 进程
+          Get-CimInstance Win32_Process | Where-Object { 
+            $_.Name -eq 'node.exe' -and $_.CommandLine -like '*server.js*'
+          } | ForEach-Object {
+            Write-Host "Stopping PID $($_.ProcessId)"
+            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
           }
           
-          # 通过命令行查找
-          $processes = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*backend/server.js*" }
-          foreach ($proc in $processes) {
-            Write-Host "Stopping process $($proc.ProcessId)"
-            Stop-Process -Id $proc.ProcessId -Force -ErrorAction SilentlyContinue
-          }
-          
-          # 检查端口
-          $portProcesses = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
-          foreach ($pid in $portProcesses) {
-            if ($pid) {
-              Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
-              Write-Host "Stopped process using port 3000: $pid"
-            }
+          # 检查端口 3000
+          Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object {
+            Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
           }
           
           Start-Sleep -Seconds 2
-          Write-Host "Old backend stopped"
 
-      - name: Start backend service
+      - name: Start backend
         shell: powershell
         run: |
-          $backendPath = "C:\Users\simba\wuyi-trip\backend"
-          $dataDir = "C:\Users\simba\wuyi-trip\data"
+          $backendDir = "$env:USERPROFILE\wuyi-trip\backend"
           
-          # 使用 nohup 方式启动后台进程（不阻塞，不重定向到同一文件）
-          $psi = New-Object System.Diagnostics.ProcessStartInfo
-          $psi.FileName = "node"
-          $psi.Arguments = "server.js"
-          $psi.WorkingDirectory = $backendPath
-          $psi.UseShellExecute = $false
-          $psi.CreateNoWindow = $true
+          # 使用 WMI 创建独立进程（脱离当前会话）
+          $cmd = "cd /d `"$backendDir`" && node server.js"
+          Invoke-WmiMethod -Class Win32_Process -Name Create -ArgumentList "cmd /c $cmd"
           
-          $process = [System.Diagnostics.Process]::Start($psi)
-          $procId = $process.Id
-          
-          Write-Host "Started backend with PID: $procId"
-          
-          # 保存 PID
-          $procId | Out-File -FilePath "$dataDir\backend.pid" -Force
-          
-          # 等待服务启动
+          Write-Host "Backend started"
           Start-Sleep -Seconds 3
-          
-          # 健康检查
+
+      - name: Health check
+        shell: powershell
+        run: |
+          $retries = 0
           $maxRetries = 10
-          $retryCount = 0
           $healthy = $false
           
-          while ($retryCount -lt $maxRetries -and !$healthy) {
+          while ($retries -lt $maxRetries -and !$healthy) {
             try {
-              $response = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 5
-              if ($response.StatusCode -eq 200) {
+              $res = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 3
+              if ($res.StatusCode -eq 200) {
                 $healthy = $true
-                Write-Host "✅ Backend is healthy!"
-                Write-Host "Response: $($response.Content)"
+                Write-Host "✅ Backend healthy: $($res.Content)"
               }
             } catch {
-              $retryCount++
-              Write-Host "Health check attempt $retryCount/$maxRetries failed, retrying..."
+              $retries++
+              Write-Host "Retry $retries/$maxRetries..."
               Start-Sleep -Seconds 2
             }
           }
           
           if (!$healthy) {
-            Write-Error "❌ Backend failed to start"
+            Write-Error "Backend failed to start"
             exit 1
           }
 
-      - name: Verify deployment
+      - name: Verify APIs
         shell: powershell
         run: |
-          # 检查进程
-          $proc = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*backend/server.js*" } | Select-Object -First 1
-          if ($proc) {
-            Write-Host "✅ Backend process running: PID $($proc.ProcessId)"
-          } else {
-            Write-Error "❌ Backend process not found"
-            exit 1
+          $apis = @('/api/messages', '/api/stats')
+          foreach ($api in $apis) {
+            try {
+              $res = Invoke-WebRequest -Uri "http://localhost:3000$api" -UseBasicParsing -TimeoutSec 5
+              Write-Host "✅ $api : $($res.StatusCode)"
+            } catch {
+              Write-Error "❌ $api failed"
+              exit 1
+            }
           }
-          
-          # 检查端口
-          $conn = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
-          if ($conn) {
-            Write-Host "✅ Port 3000 is listening"
-          } else {
-            Write-Error "❌ Port 3000 not listening"
-            exit 1
-          }
-          
-          # 测试 API
-          try {
-            $messages = Invoke-WebRequest -Uri "http://localhost:3000/api/messages" -UseBasicParsing -TimeoutSec 5
-            Write-Host "✅ API /api/messages working: $($messages.StatusCode)"
-          } catch {
-            Write-Error "❌ API /api/messages failed: $($_.Exception.Message)"
-            exit 1
-          }
-          
-          try {
-            $stats = Invoke-WebRequest -Uri "http://localhost:3000/api/stats" -UseBasicParsing -TimeoutSec 5
-            Write-Host "✅ API /api/stats working: $($stats.StatusCode)"
-          } catch {
-            Write-Error "❌ API /api/stats failed: $($_.Exception.Message)"
-            exit 1
-          }
-
-      - name: Deployment summary
-        shell: powershell
-        run: |
-          Write-Host ""
-          Write-Host "================================"
-          Write-Host " ✅ Deployment Complete!"
-          Write-Host "================================"
-          Write-Host " Backend: http://localhost:3000"
-          Write-Host " PID: $(Get-Content C:\Users\simba\wuyi-trip\data\backend.pid -Raw)"
-          Write-Host "================================"
