@@ -126,7 +126,7 @@
   <!-- 8. 旅行弹幕 -->
   <div class="danmu-container" id="danmuContainer"></div>
   <div class="danmu-input-bar">
-    <input type="text" id="danmuInput" placeholder="发一条弹幕..." maxlength="20">
+    <input type="text" id="danmuInput" placeholder="发一条弹幕/留言..." maxlength="100">
     <button onclick="sendDanmu()">发送</button>
   </div>
 
@@ -185,6 +185,24 @@
     </div>
   </section>
 
+  <!-- 留言板（隐藏入口） -->
+  <div class="message-board-trigger" onclick="toggleMessageBoard()">
+    <span>💬</span>
+  </div>
+  
+  <div class="message-board-panel" id="messageBoardPanel">
+    <div class="message-board-header">
+      <h3>💬 匿名留言板</h3>
+      <button onclick="toggleMessageBoard()">✕</button>
+    </div>
+    <div class="message-board-desc">
+      <small>留言会显示为弹幕，所有人都能看到~</small>
+    </div>
+    <div class="message-board-list" id="message-board-list">
+      <div class="message-loading">加载中...</div>
+    </div>
+  </div>
+
   <!-- 页脚 -->
   <footer class="footer">
     <p>🗺️ 点击任意地点的「📍导航」按钮，可直接唤起高德地图</p>
@@ -199,6 +217,7 @@
   <script src="js/tts.js"></script>
   <script src="js/poster.js"></script>
   <script src="js/weather.js"></script>
+  <script src="js/message-board.js"></script>
   <script>
     // ============================================
     // 渲染行程内容
@@ -754,21 +773,58 @@
       }, 2500);
     }
     
-    function sendDanmu() {
+    async function sendDanmu() {
       const input = document.getElementById('danmuInput');
       const text = input.value.trim();
       if (!text) return;
       
+      // 先显示本地弹幕
       const container = document.getElementById('danmuContainer');
       const danmu = document.createElement('div');
       danmu.className = 'danmu-item';
       danmu.textContent = text;
       danmu.style.top = Math.random() * 80 + 'px';
       danmu.style.color = '#e74c3c';
+      danmu.style.background = 'rgba(255, 235, 238, 0.9)';
+      danmu.style.border = '1px solid #ffcdd2';
       container.appendChild(danmu);
-      
       setTimeout(() => danmu.remove(), 8000);
+      
+      // 保存到GitHub Issues
+      if (window.MessageBoard) {
+        try {
+          await MessageBoard.send(text);
+          showToast('✅ 留言已保存');
+        } catch (err) {
+          showToast('❌ 保存失败: ' + err.message);
+        }
+      }
+      
       input.value = '';
+    }
+    
+    // 显示提示
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.className = 'danmu-toast';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add('show'));
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 2000);
+    }
+    
+    // 切换留言板显示/隐藏
+    function toggleMessageBoard() {
+      const panel = document.getElementById('messageBoardPanel');
+      if (panel) {
+        panel.classList.toggle('active');
+        if (panel.classList.contains('active') && window.MessageBoard) {
+          MessageBoard.render();
+        }
+      }
     }
     
     // 渲染天气预报员（显示5天预报概览）
@@ -1169,6 +1225,11 @@
       
       // 初始化点击爱心
       initClickHearts();
+      
+      // 初始化留言板
+      if (window.MessageBoard) {
+        MessageBoard.init();
+      }
     });
   </script>
 </body>

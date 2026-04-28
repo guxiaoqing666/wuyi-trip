@@ -981,3 +981,165 @@
     margin-right: 0;
   }
 }
+/* ============================================
+   留言板样式
+   ============================================ */
+
+/* 留言板触发按钮（隐藏在页脚上方） */
+.message-board-trigger {
+  position: fixed;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.3;
+  transition: opacity 0.3s;
+  z-index: 100;
+}
+
+.message-board-trigger:hover {
+  opacity: 0.8;
+}
+
+.message-board-trigger span {
+  font-size: 16px;
+}
+
+/* 留言板面板 */
+.message-board-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 70vh;
+  background: white;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+  z-index: 1000;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-board-panel.active {
+  transform: translateY(0);
+}
+
+.message-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.message-board-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.message-board-header button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-board-desc {
+  padding: 8px 20px;
+  text-align: center;
+  color: var(--color-text-light);
+}
+
+.message-board-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.message-item {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  animation: fadeInUp 0.3s ease;
+}
+
+.message-content {
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.message-time {
+  font-size: 11px;
+  color: var(--color-text-light);
+  margin-top: 6px;
+}
+
+.message-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-light);
+  font-size: 14px;
+}
+
+.message-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--color-text-light);
+}
+
+/* 弹幕发送提示 */
+.danmu-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 10px 24px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 10001;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.danmu-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 响应式 */
+@media (min-width: 768px) {
+  .message-board-panel {
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 100%;
+    max-width: 600px;
+  }
+  
+  .message-board-panel.active {
+    transform: translateX(-50%) translateY(0);
+  }
+}
