@@ -5,26 +5,34 @@
 
 $DATA_DIR = "C:\Users\simba\wuyi-trip\data"
 $PID_FILE = "$DATA_DIR\backend.pid"
-$LOG_FILE = "$DATA_DIR\backend.log"
 $PORT = 3000
 
 Write-Host "================================" -ForegroundColor Cyan
 Write-Host " 后端服务状态" -ForegroundColor Cyan
 Write-Host "================================" -ForegroundColor Cyan
 
-# 检查进程
-$proc = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*backend/server.js*" } | Select-Object -First 1
+# 检查 Java 进程
+$proc = Get-CimInstance Win32_Process | Where-Object { 
+    $_.Name -eq 'java.exe' -and $_.CommandLine -like '*wuyi-trip*'
+} | Select-Object -First 1
 
 if ($proc) {
-    Write-Host "状态: ✅ 运行中" -ForegroundColor Green
+    Write-Host "状态: ✅ 运行中 (Java)" -ForegroundColor Green
     Write-Host "PID:  $($proc.ProcessId)" -ForegroundColor White
-    Write-Host "启动: $($proc.CreationDate)" -ForegroundColor White
-    
-    # 内存使用
     $process = Get-Process -Id $proc.ProcessId
     Write-Host "内存: $([math]::Round($process.WorkingSet64 / 1MB, 2)) MB" -ForegroundColor White
 } else {
-    Write-Host "状态: ❌ 未运行" -ForegroundColor Red
+    # 检查 Node 进程（兼容旧版）
+    $proc = Get-CimInstance Win32_Process | Where-Object { 
+        $_.Name -eq 'node.exe' -and $_.CommandLine -like '*server.js*'
+    } | Select-Object -First 1
+    
+    if ($proc) {
+        Write-Host "状态: ✅ 运行中 (Node.js)" -ForegroundColor Green
+        Write-Host "PID:  $($proc.ProcessId)" -ForegroundColor White
+    } else {
+        Write-Host "状态: ❌ 未运行" -ForegroundColor Red
+    }
 }
 
 # 检查端口
@@ -38,7 +46,10 @@ if ($conn) {
 # 测试 API
 try {
     $health = Invoke-WebRequest -Uri "http://localhost:$PORT/api/health" -UseBasicParsing -TimeoutSec 5
+    $healthData = $health.Content | ConvertFrom-Json
     Write-Host "API:  ✅ 健康检查通过" -ForegroundColor Green
+    Write-Host "      留言: $($healthData.data.messages) 条" -ForegroundColor White
+    Write-Host "      访问: $($healthData.data.visits) 次" -ForegroundColor White
 } catch {
     Write-Host "API:  ❌ 健康检查失败" -ForegroundColor Red
 }
@@ -55,12 +66,6 @@ if (Test-Path $messagesFile) {
 if (Test-Path $visitsFile) {
     $visits = Get-Content $visitsFile | ConvertFrom-Json
     Write-Host "访问: $($visits.Length) 次" -ForegroundColor White
-}
-
-# 日志
-if (Test-Path $LOG_FILE) {
-    $logSize = (Get-Item $LOG_FILE).Length
-    Write-Host "日志: $([math]::Round($logSize / 1KB, 2)) KB" -ForegroundColor White
 }
 
 Write-Host "================================" -ForegroundColor Cyan

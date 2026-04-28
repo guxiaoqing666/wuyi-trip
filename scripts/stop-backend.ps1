@@ -1,5 +1,5 @@
 # ============================================
-# 停止后端服务脚本
+# 停止后端服务
 # 用法: .\scripts\stop-backend.ps1
 # ============================================
 
@@ -15,28 +15,38 @@ $stopped = $false
 
 # 方法1: 通过 PID 文件
 if (Test-Path $PID_FILE) {
-    $pid = Get-Content $PID_FILE -Raw
-    $pid = $pid.Trim()
-    
-    $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
+    $procId = Get-Content $PID_FILE -Raw
+    $procId = $procId.Trim()
+    $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
     if ($proc) {
-        Stop-Process -Id $pid -Force
-        Write-Host "✅ 已停止进程 (PID: $pid)" -ForegroundColor Green
+        Stop-Process -Id $procId -Force
+        Write-Host "✅ 已停止进程 (PID: $procId)" -ForegroundColor Green
         $stopped = $true
     }
-    
     Remove-Item $PID_FILE -Force -ErrorAction SilentlyContinue
 }
 
-# 方法2: 通过进程名
-$procs = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*backend/server.js*" }
+# 方法2: 通过进程名 (Java)
+$procs = Get-CimInstance Win32_Process | Where-Object { 
+    $_.Name -eq 'java.exe' -and $_.CommandLine -like '*wuyi-trip*'
+}
 foreach ($proc in $procs) {
     Stop-Process -Id $proc.ProcessId -Force -ErrorAction SilentlyContinue
-    Write-Host "✅ 已停止进程 (PID: $($proc.ProcessId))" -ForegroundColor Green
+    Write-Host "✅ 已停止 Java 进程 (PID: $($proc.ProcessId))" -ForegroundColor Green
     $stopped = $true
 }
 
-# 方法3: 通过端口
+# 方法3: 通过进程名 (Node.js 兼容旧版)
+$procs = Get-CimInstance Win32_Process | Where-Object { 
+    $_.Name -eq 'node.exe' -and $_.CommandLine -like '*server.js*'
+}
+foreach ($proc in $procs) {
+    Stop-Process -Id $proc.ProcessId -Force -ErrorAction SilentlyContinue
+    Write-Host "✅ 已停止 Node 进程 (PID: $($proc.ProcessId))" -ForegroundColor Green
+    $stopped = $true
+}
+
+# 方法4: 通过端口
 $conn = Get-NetTCPConnection -LocalPort $PORT -ErrorAction SilentlyContinue
 foreach ($c in $conn) {
     if ($c.OwningProcess) {
