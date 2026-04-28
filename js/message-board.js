@@ -1,35 +1,39 @@
 // ============================================
-// 匿名留言板 - 使用后端 API
-// 支持：留言、点赞、删除、实时同步、在线人数
+// 匿名留言板 - 支持本地和远程后端
 // ============================================
 
 (function() {
   'use strict';
 
-  const API_BASE = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000/api'
-    : 'http://localhost:3000/api';
-  const POLL_INTERVAL = 10000; // 10秒轮询
+  // API 配置 - 修改这里切换后端地址
+  // 本地开发: http://localhost:3000/api
+  // 远程地址: 你的 ngrok/serveo 地址
+  const API_BASE = (function() {
+    // 如果本地后端可用，优先使用本地
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:3000/api';
+    }
+    // GitHub Pages 或其他环境，尝试连接本地后端（需要内网穿透）
+    // 如果有公网地址，修改这里：
+    // return 'https://你的地址.com/api';
+    return 'http://localhost:3000/api';
+  })();
+
+  const POLL_INTERVAL = 10000;
   
   let messagesCache = [];
   let statsCache = {};
   let danmuTimer = null;
   let pollTimer = null;
-  let myIP = null;
 
-  // ============================================
-  // 工具函数
-  // ============================================
-  
   function formatTime(dateStr) {
     const date = new Date(dateStr);
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
-
     if (diff < 60) return '刚刚';
-    if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}天前`;
+    if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+    if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+    if (diff < 604800) return Math.floor(diff / 86400) + '天前';
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 
@@ -39,52 +43,46 @@
     return div.innerHTML;
   }
 
-  function showToast(msg, type = 'success') {
+  function showToast(msg, type) {
     const toast = document.createElement('div');
     toast.className = 'danmu-toast';
     toast.textContent = msg;
     if (type === 'error') toast.style.background = '#e74c3c';
     document.body.appendChild(toast);
-    requestAnimationFrame(() => toast.classList.add('show'));
-    setTimeout(() => {
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() {
       toast.classList.remove('show');
-      setTimeout(() => toast.remove(), 300);
+      setTimeout(function() { toast.remove(); }, 300);
     }, 2000);
   }
 
-  // ============================================
   // API 请求
-  // ============================================
-
-  async function apiGet(path) {
-    const res = await fetch(`${API_BASE}${path}`);
+  async function apiRequest(method, path, body) {
+    const options = {
+      method: method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if (body) options.body = JSON.stringify(body);
+    
+    const res = await fetch(API_BASE + path, options);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
   }
 
-  async function apiPost(path, body) {
-    const res = await fetch(`${API_BASE}${path}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return res.json();
+  // 检查后端是否可用
+  async function checkBackend() {
+    try {
+      const res = await fetch(API_BASE + '/health', { method: 'GET', timeout: 3000 });
+      return res.ok;
+    } catch (e) {
+      return false;
+    }
   }
 
-  async function apiDelete(path) {
-    const res = await fetch(`${API_BASE}${path}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return res.json();
-  }
-
-  // ============================================
   // 数据操作
-  // ============================================
-
   async function fetchMessages() {
     try {
-      const result = await apiGet('/messages');
+      const result = await apiRequest('GET', '/messages');
       if (result.success) {
         messagesCache = result.data;
         localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
@@ -105,7 +103,7 @@
     }
 
     try {
-      const result = await apiPost('/messages', { 
+      const result = await apiRequest('POST', '/messages', { 
         content: content.trim(),
         nickname: nickname || '匿名游客'
       });
@@ -130,8 +128,8 @@
 
   async function deleteMessage(id) {
     try {
-      await apiDelete(`/messages/${id}`);
-      messagesCache = messagesCache.filter(m => m.id !== id);
+      await apiRequest('DELETE', '/messages/' + id);
+      messagesCache = messagesCache.filter(function(m) { return m.id !== id; });
       localStorage.setItem('wuyi_trip_messages', JSON.stringify(messagesCache));
       return true;
     } catch (err) {
@@ -142,10 +140,9 @@
 
   async function likeMessage(id) {
     try {
-      const result = await apiPost(`/messages/${id}/like`);
+      const result = await apiRequest('POST', '/messages/' + id + '/like');
       if (result.success) {
-        // 更新本地缓存
-        const msg = messagesCache.find(m => m.id === id);
+        const msg = messagesCache.find(function(m) { return m.id === id; });
         if (msg) {
           msg.likes = result.data.likes;
           msg.likedByMe = result.data.liked;
@@ -160,10 +157,8 @@
 
   async function fetchStats() {
     try {
-      const result = await apiGet('/stats');
-      if (result.success) {
-        statsCache = result.data;
-      }
+      const result = await apiRequest('GET', '/stats');
+      if (result.success) statsCache = result.data;
     } catch (err) {
       console.warn('获取统计失败:', err.message);
     }
@@ -172,16 +167,11 @@
 
   async function recordVisit() {
     try {
-      await apiPost('/visit', { url: window.location.href });
-    } catch (err) {
-      // 静默失败
-    }
+      await apiRequest('POST', '/visit', { url: window.location.href });
+    } catch (err) {}
   }
 
-  // ============================================
   // UI 渲染
-  // ============================================
-
   function renderMessageBoard() {
     const container = document.getElementById('message-board-list');
     if (!container) return;
@@ -191,40 +181,38 @@
       return;
     }
 
-    container.innerHTML = messagesCache.slice(0, 50).map(msg => {
-      const canDelete = msg.ip === myIP || !msg.ip; // 自己的或本地存储的
-      const likeClass = msg.likedByMe ? 'liked' : '';
+    container.innerHTML = messagesCache.slice(0, 50).map(function(msg) {
+      var canDelete = msg.ip === 'local' || !msg.ip;
+      var likeClass = msg.likedByMe ? 'liked' : '';
       
-      return `
-        <div class="message-item" data-id="${msg.id}">
-          <div class="message-header">
-            <span class="message-nickname">${escapeHtml(msg.nickname || '匿名')}</span>
-            <span class="message-time">${formatTime(msg.createdAt)}</span>
-          </div>
-          <div class="message-content">${escapeHtml(msg.content)}</div>
-          <div class="message-actions">
-            <button class="like-btn ${likeClass}" onclick="MessageBoard.like(${msg.id})">
-              ❤️ <span>${msg.likes || 0}</span>
-            </button>
-            ${canDelete ? `<button class="delete-btn" onclick="MessageBoard.delete(${msg.id})">🗑️</button>` : ''}
-          </div>
-        </div>
-      `;
+      return '<div class="message-item" data-id="' + msg.id + '">' +
+        '<div class="message-header">' +
+          '<span class="message-nickname">' + escapeHtml(msg.nickname || '匿名') + '</span>' +
+          '<span class="message-time">' + formatTime(msg.createdAt) + '</span>' +
+        '</div>' +
+        '<div class="message-content">' + escapeHtml(msg.content) + '</div>' +
+        '<div class="message-actions">' +
+          '<button class="like-btn ' + likeClass + '" onclick="MessageBoard.like(' + msg.id + ')">' +
+            '❤️ <span>' + (msg.likes || 0) + '</span>' +
+          '</button>' +
+          (canDelete ? '<button class="delete-btn" onclick="MessageBoard.delete(' + msg.id + ')">🗑️</button>' : '') +
+        '</div>' +
+      '</div>';
     }).join('');
   }
 
   function updateStatsDisplay() {
-    const msgEl = document.getElementById('statsMessages');
-    const visitEl = document.getElementById('statsVisits');
-    const onlineEl = document.getElementById('statsOnline');
-    const badge = document.getElementById('messageBadge');
+    var msgEl = document.getElementById('statsMessages');
+    var visitEl = document.getElementById('statsVisits');
+    var onlineEl = document.getElementById('statsOnline');
+    var badge = document.getElementById('messageBadge');
     
     if (msgEl) msgEl.textContent = statsCache.totalMessages || messagesCache.length;
     if (visitEl) visitEl.textContent = statsCache.totalVisits || 0;
     if (onlineEl) onlineEl.textContent = statsCache.onlineNow || 0;
     
     if (badge) {
-      const count = messagesCache.length;
+      var count = messagesCache.length;
       if (count > 0) {
         badge.textContent = count > 99 ? '99+' : count;
         badge.classList.add('show');
@@ -232,15 +220,12 @@
     }
   }
 
-  // ============================================
   // 弹幕
-  // ============================================
-
-  function showDanmu(text, isNew = false) {
-    const container = document.getElementById('danmuContainer');
+  function showDanmu(text, isNew) {
+    var container = document.getElementById('danmuContainer');
     if (!container) return;
 
-    const danmu = document.createElement('div');
+    var danmu = document.createElement('div');
     danmu.className = 'danmu-item';
     danmu.textContent = text;
     danmu.style.top = Math.random() * 80 + 'px';
@@ -252,29 +237,29 @@
     }
 
     container.appendChild(danmu);
-    setTimeout(() => danmu.remove(), 8000);
+    setTimeout(function() { danmu.remove(); }, 8000);
   }
 
   function startDanmuPlayback() {
     if (danmuTimer) clearInterval(danmuTimer);
 
-    const defaultDanmus = [
+    var defaultDanmus = [
       '小庆开车稳！🚗', '都老师今天吃什么？🍜', '香香拍照好看！📸',
       '程老师注意休息⛽', '海边风好大💨', '咸鸭蛋真香🥚',
       '小庆开车辛苦了💪', '安全第一！🛡️', '五一快乐！🎉'
     ];
 
-    const messageTexts = messagesCache
-      .filter(m => m.content.length <= 30)
-      .map(m => m.content);
+    var messageTexts = messagesCache
+      .filter(function(m) { return m.content.length <= 30; })
+      .map(function(m) { return m.content; });
     
-    const allDanmus = [...messageTexts, ...defaultDanmus];
+    var allDanmus = messageTexts.concat(defaultDanmus);
     if (allDanmus.length === 0) return;
 
-    let index = 0;
-    const shuffled = [...allDanmus].sort(() => Math.random() - 0.5);
+    var index = 0;
+    var shuffled = allDanmus.sort(function() { return Math.random() - 0.5; });
     
-    const playNext = () => {
+    var playNext = function() {
       showDanmu(shuffled[index % shuffled.length]);
       index++;
     };
@@ -283,37 +268,24 @@
     danmuTimer = setInterval(playNext, 3000);
   }
 
-  // ============================================
   // 实时同步
-  // ============================================
-
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
     
-    pollTimer = setInterval(async () => {
-      // 只在留言板打开时刷新
-      const panel = document.getElementById('messageBoardPanel');
+    pollTimer = setInterval(function() {
+      var panel = document.getElementById('messageBoardPanel');
       if (panel && panel.classList.contains('active')) {
-        await fetchMessages();
-        renderMessageBoard();
-        await fetchStats();
-        updateStatsDisplay();
+        fetchMessages().then(function() {
+          renderMessageBoard();
+          fetchStats().then(updateStatsDisplay);
+        });
       }
     }, POLL_INTERVAL);
   }
 
-  // ============================================
   // 初始化
-  // ============================================
-
   async function init() {
     try {
-      // 获取本机 IP（用于判断能否删除）
-      try {
-        const health = await apiGet('/health');
-        myIP = health.data?.myIP || 'local';
-      } catch {}
-      
       await fetchMessages();
       await fetchStats();
       renderMessageBoard();
@@ -328,21 +300,19 @@
     }
   }
 
-  // ============================================
   // 公开 API
-  // ============================================
   window.MessageBoard = {
-    init,
+    init: init,
     send: sendMessage,
     delete: deleteMessage,
     like: likeMessage,
     fetch: fetchMessages,
     render: renderMessageBoard,
     updateStats: updateStatsDisplay,
-    showDanmu,
+    showDanmu: showDanmu,
     startDanmu: startDanmuPlayback,
-    getMessages: () => messagesCache,
-    getStats: () => statsCache
+    getMessages: function() { return messagesCache; },
+    getStats: function() { return statsCache; }
   };
 
 })();
