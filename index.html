@@ -200,14 +200,6 @@
       <small>✨ 发送弹幕即留言，数据保存在本地服务器</small>
     </div>
     
-    <!-- 后端配置 -->
-    <div class="message-board-config" id="messageBoardConfig">
-      <div style="font-size:12px;color:#666;margin-bottom:6px;">💡 后端地址配置</div>
-      <input type="text" id="backendUrlInput" placeholder="如: http://192.168.1.100:3000/api" value="">
-      <button onclick="saveBackendUrl()">保存</button>
-    </div>
-    <div class="message-board-config-status" id="backendStatus" style="font-size:12px;color:#27ae60;padding:4px 0;"></div>
-    
     <!-- 统计信息 -->
     <div class="message-board-stats" id="messageBoardStats">
       <span>💬 <b id="statsMessages">0</b> 条留言</span>
@@ -858,28 +850,6 @@
       }
     }
     
-    // 后端地址配置
-    function saveBackendUrl() {
-      const input = document.getElementById('backendUrlInput');
-      const url = input.value.trim();
-      if (url) {
-        localStorage.setItem('wuyi_backend_url', url);
-        document.getElementById('backendStatus').textContent = '✅ 已保存，刷新页面生效';
-        showToast('✅ 后端地址已保存，请刷新页面');
-      }
-    }
-    
-    // 加载保存的后端地址
-    function loadBackendUrl() {
-      const saved = localStorage.getItem('wuyi_backend_url');
-      if (saved) {
-        document.getElementById('backendUrlInput').value = saved;
-        document.getElementById('backendStatus').textContent = '当前: ' + saved;
-      } else {
-        document.getElementById('backendStatus').textContent = '默认: http://localhost:3000/api';
-      }
-    }
-    
     // 发送留言板消息
     async function sendBoardMessage() {
       const input = document.getElementById('boardMessageInput');
@@ -1330,8 +1300,7 @@
         MessageBoard.init();
       }
       
-      // 加载后端地址配置
-      loadBackendUrl();
+      // 后端已固定配置，无需手动设置
     });
   </script>
   
