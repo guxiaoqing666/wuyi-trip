@@ -19,18 +19,7 @@ jobs:
 
       - name: Check Java
         shell: powershell
-        run: |
-          java -version
-          if (!(Get-Command mvn -ErrorAction SilentlyContinue)) {
-            Write-Error "Maven not found! Please install Maven."
-            exit 1
-          }
-          mvn -version
-
-      - name: Build Java backend
-        shell: powershell
-        working-directory: java-backend
-        run: mvn clean package -DskipTests
+        run: java -version
 
       - name: Ensure data directory
         shell: powershell
@@ -71,19 +60,27 @@ jobs:
         shell: powershell
         run: |
           $jarPath = Resolve-Path "java-backend\target\wuyi-trip-backend-1.0.0.jar"
+          $libPath = Resolve-Path "java-backend\lib"
           Write-Host "Starting: $jarPath"
           
-          # 使用 Start-Process 启动，脱离当前会话
-          $proc = Start-Process -FilePath "java" `
-            -ArgumentList "-jar", $jarPath `
-            -WorkingDirectory "$env:USERPROFILE\wuyi-trip" `
-            -WindowStyle Hidden `
-            -PassThru
+          # 构建 classpath
+          $jars = Get-ChildItem "$libPath\*.jar" | ForEach-Object { $_.FullName }
+          $cp = "$jarPath;" + ($jars -join ";")
           
-          Write-Host "Started Java backend PID: $($proc.Id)"
+          # 使用 WMI 创建独立进程（脱离当前会话）
+          $startupInfo = New-Object System.Diagnostics.ProcessStartInfo
+          $startupInfo.FileName = "java"
+          $startupInfo.Arguments = "-cp `"$cp`" com.wuyi.trip.Application"
+          $startupInfo.WorkingDirectory = "$env:USERPROFILE\wuyi-trip"
+          $startupInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
+          $startupInfo.CreateNoWindow = $true
+          $startupInfo.UseShellExecute = $false
+          
+          $process = [System.Diagnostics.Process]::Start($startupInfo)
+          Write-Host "Started Java backend PID: $($process.Id)"
           
           # 保存 PID
-          $proc.Id | Out-File -FilePath "$env:USERPROFILE\wuyi-trip\data\backend.pid" -Force
+          $process.Id | Out-File -FilePath "$env:USERPROFILE\wuyi-trip\data\backend.pid" -Force
           
           Start-Sleep -Seconds 5
 
