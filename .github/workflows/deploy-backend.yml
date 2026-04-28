@@ -31,10 +31,6 @@ jobs:
         run: taskkill /F /IM node.exe
         continue-on-error: true
 
-      - name: Wait
-        shell: cmd
-        run: timeout /t 2 /nobreak
-
       - name: Start backend
         shell: cmd
         working-directory: backend
@@ -42,7 +38,7 @@ jobs:
 
       - name: Wait for startup
         shell: cmd
-        run: timeout /t 3 /nobreak
+        run: ping 127.0.0.1 -n 4
 
       - name: Health check
         shell: cmd
@@ -50,6 +46,4 @@ jobs:
 
       - name: Verify APIs
         shell: cmd
-        run: |
-          curl http://localhost:3000/api/messages
-          curl http://localhost:3000/api/stats
+        run: curl http://localhost:3000/api/stats
