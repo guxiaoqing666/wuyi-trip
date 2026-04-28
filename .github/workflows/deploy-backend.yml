@@ -23,40 +23,33 @@ jobs:
 
       - name: Install dependencies
         shell: cmd
-        run: |
-          cd backend
-          if exist package.json npm install
-
-      - name: Ensure data directory
-        shell: cmd
-        run: |
-          if not exist "%USERPROFILE%\wuyi-trip\data" mkdir "%USERPROFILE%\wuyi-trip\data"
+        working-directory: backend
+        run: npm install
 
       - name: Stop existing backend
         shell: cmd
-        run: |
-          taskkill /F /IM node.exe 2>nul
-          timeout /t 2 /nobreak >nul
+        run: taskkill /F /IM node.exe
+        continue-on-error: true
+
+      - name: Wait
+        shell: cmd
+        run: timeout /t 2 /nobreak
 
       - name: Start backend
         shell: cmd
-        run: |
-          cd backend
-          start /min node server.js
-          timeout /t 3 /nobreak >nul
+        working-directory: backend
+        run: start node server.js
+
+      - name: Wait for startup
+        shell: cmd
+        run: timeout /t 3 /nobreak
 
       - name: Health check
         shell: cmd
-        run: |
-          curl -s http://localhost:3000/api/health >nul
-          if errorlevel 1 (
-            timeout /t 3 /nobreak >nul
-            curl -s http://localhost:3000/api/health >nul
-            if errorlevel 1 exit 1
-          )
+        run: curl http://localhost:3000/api/health
 
       - name: Verify APIs
         shell: cmd
         run: |
-          curl -s http://localhost:3000/api/messages >nul
-          curl -s http://localhost:3000/api/stats >nul
+          curl http://localhost:3000/api/messages
+          curl http://localhost:3000/api/stats
