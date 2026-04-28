@@ -29,43 +29,87 @@ jobs:
       - name: Stop existing backend
         shell: powershell
         run: |
+          # 停止所有 node server.js 进程
           Get-CimInstance Win32_Process | Where-Object { 
-            $_.Name -eq 'node.exe' -and $_.CommandLine -like '*server.js*'
+            $_.CommandLine -like '*server.js*'
           } | ForEach-Object {
+            Write-Host "Stopping PID $($_.ProcessId)"
             Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
           }
+          
+          # 释放端口 3000
+          Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object {
+            Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue
+          }
+          
           Start-Sleep -Seconds 2
+          Write-Host "Old backend stopped"
 
-      - name: Start backend
+      - name: Start backend as independent process
         shell: powershell
         run: |
-          $proc = Start-Process -FilePath "node" -ArgumentList "server.js" -WorkingDirectory "backend" -PassThru
-          Write-Host "Started backend PID: $($proc.Id)"
+          $backendPath = Resolve-Path "backend"
+          $nodePath = (Get-Command node).Source
+          
+          # 使用 WMI 创建完全独立的进程（脱离当前会话）
+          $startupInfo = New-Object System.Diagnostics.ProcessStartInfo
+          $startupInfo.FileName = $nodePath
+          $startupInfo.Arguments = "server.js"
+          $startupInfo.WorkingDirectory = $backendPath
+          $startupInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
+          $startupInfo.CreateNoWindow = $true
+          $startupInfo.UseShellExecute = $false
+          
+          $process = [System.Diagnostics.Process]::Start($startupInfo)
+          Write-Host "Started backend PID: $($process.Id)"
+          
+          # 保存 PID 到文件
+          $process.Id | Out-File -FilePath "$env:USERPROFILE\wuyi-trip\data\backend.pid" -Force
+          
           Start-Sleep -Seconds 3
 
       - name: Health check
         shell: powershell
         run: |
           $retries = 0
-          while ($retries -lt 5) {
+          $maxRetries = 10
+          $healthy = $false
+          
+          while ($retries -lt $maxRetries -and !$healthy) {
             try {
               $res = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 3
               if ($res.StatusCode -eq 200) {
-                Write-Host "✅ Backend healthy"
-                return
+                $healthy = $true
+                Write-Host "✅ Backend healthy: $($res.Content)"
               }
             } catch {
               $retries++
-              Write-Host "Retry $retries..."
+              Write-Host "Retry $retries/$maxRetries..."
               Start-Sleep -Seconds 2
             }
           }
-          throw "Backend failed to start"
+          
+          if (!$healthy) {
+            throw "Backend failed to start"
+          }
 
       - name: Verify APIs
         shell: powershell
         run: |
-          Invoke-WebRequest -Uri "http://localhost:3000/api/messages" -UseBasicParsing | Out-Null
-          Write-Host "✅ /api/messages OK"
-          Invoke-WebRequest -Uri "http://localhost:3000/api/stats" -UseBasicParsing | Out-Null
-          Write-Host "✅ /api/stats OK"
+          $messages = Invoke-WebRequest -Uri "http://localhost:3000/api/messages" -UseBasicParsing
+          Write-Host "✅ /api/messages OK ($($messages.StatusCode))"
+          
+          $stats = Invoke-WebRequest -Uri "http://localhost:3000/api/stats" -UseBasicParsing
+          Write-Host "✅ /api/stats OK ($($stats.StatusCode))"
+
+      - name: Show process info
+        shell: powershell
+        run: |
+          $pidFile = "$env:USERPROFILE\wuyi-trip\data\backend.pid"
+          if (Test-Path $pidFile) {
+            $pid = Get-Content $pidFile
+            $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
+            if ($proc) {
+              Write-Host "✅ Backend running: PID $pid, Memory $([math]::Round($proc.WorkingSet64/1MB,1)) MB"
+            }
+          }
