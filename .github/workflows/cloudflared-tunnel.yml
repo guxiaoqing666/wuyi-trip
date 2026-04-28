@@ -1,0 +1,31 @@
+name: Cloudflare Tunnel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tunnel:
+    runs-on: self-hosted
+    steps:
+      - name: Download cloudflared
+        shell: powershell
+        run: |
+          $url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
+          $output = "$env:USERPROFILE\wuyi-trip\cloudflared.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output -TimeoutSec 300
+          Write-Host "Downloaded to $output"
+
+      - name: Check cloudflared
+        shell: cmd
+        run: "%USERPROFILE%\wuyi-trip\cloudflared.exe --version"
+
+      - name: Login to Cloudflare
+        shell: cmd
+        run: |
+          echo 请手动运行以下命令登录：
+          echo %USERPROFILE%\wuyi-trip\cloudflared.exe tunnel login
+          echo.
+          echo 登录后创建隧道：
+          echo %USERPROFILE%\wuyi-trip\cloudflared.exe tunnel create wuyi-trip
+          echo.
+          echo 然后配置并运行隧道
