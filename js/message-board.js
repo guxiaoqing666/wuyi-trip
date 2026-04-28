@@ -9,8 +9,8 @@
   const API_BASE = (function() {
     var saved = localStorage.getItem('wuyi_backend_url');
     if (saved) return saved;
-    // 默认本地地址
-    return 'http://localhost:3000/api';
+    // 默认 Cloudflare Tunnel 地址
+    return 'https://discussing-sensitivity-digit-typing.trycloudflare.com/api';
   })();
 
   const POLL_INTERVAL = 10000;
