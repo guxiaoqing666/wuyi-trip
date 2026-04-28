@@ -1,19 +1,71 @@
-# 后端服务请手动启动：
-# cd backend && node server.js
-# 或使用: .\scripts\start-backend.ps1
-#
-# 此工作流已禁用，因为 Self-Hosted Runner 的 PowerShell 执行策略限制
-# 如需自动部署，请在 Runner 机器上运行（管理员 PowerShell）：
-# Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
-
 name: Deploy Backend to Self-Hosted Runner
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: self-hosted
+    name: Deploy Backend on Local Server
+
     steps:
-      - name: Manual deploy only
-        run: echo "Please start backend manually: cd backend && node server.js"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check Node.js
+        shell: powershell
+        run: node --version
+
+      - name: Install dependencies
+        shell: powershell
+        working-directory: backend
+        run: npm install
+
+      - name: Stop existing backend
+        shell: powershell
+        run: |
+          Get-CimInstance Win32_Process | Where-Object { 
+            $_.Name -eq 'node.exe' -and $_.CommandLine -like '*server.js*'
+          } | ForEach-Object {
+            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+          }
+          Start-Sleep -Seconds 2
+
+      - name: Start backend
+        shell: powershell
+        run: |
+          $proc = Start-Process -FilePath "node" -ArgumentList "server.js" -WorkingDirectory "backend" -PassThru
+          Write-Host "Started backend PID: $($proc.Id)"
+          Start-Sleep -Seconds 3
+
+      - name: Health check
+        shell: powershell
+        run: |
+          $retries = 0
+          while ($retries -lt 5) {
+            try {
+              $res = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 3
+              if ($res.StatusCode -eq 200) {
+                Write-Host "✅ Backend healthy"
+                return
+              }
+            } catch {
+              $retries++
+              Write-Host "Retry $retries..."
+              Start-Sleep -Seconds 2
+            }
+          }
+          throw "Backend failed to start"
+
+      - name: Verify APIs
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "http://localhost:3000/api/messages" -UseBasicParsing | Out-Null
+          Write-Host "✅ /api/messages OK"
+          Invoke-WebRequest -Uri "http://localhost:3000/api/stats" -UseBasicParsing | Out-Null
+          Write-Host "✅ /api/stats OK"
