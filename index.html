@@ -198,6 +198,7 @@
   <script src="js/progress.js"></script>
   <script src="js/tts.js"></script>
   <script src="js/poster.js"></script>
+  <script src="js/weather.js"></script>
   <script>
     // ============================================
     // 渲染行程内容
@@ -209,6 +210,10 @@
       
       TRIP_DATA.days.forEach((day, dayIndex) => {
         const colorClass = dayColors[dayIndex];
+        
+        // 获取城市名（提前到循环外）
+        const cityNames = ['高邮', '连云港', '日照', '徐州', '徐州'];
+        const currentCity = cityNames[dayIndex] || '';
         
         // 生成时间轴HTML
         let timelineHtml = '';
@@ -237,6 +242,9 @@
             </ul>
           ` : '';
           
+          // 时间轴上不显示天气（避免和顶部天气卡片重复）
+          const itemWeatherHtml = '';
+          
           timelineHtml += `
             <div class="timeline-item type-${item.type}">
               <div class="timeline-time">${item.time}</div>
@@ -244,6 +252,7 @@
               <div class="timeline-content">
                 <div class="timeline-title">${item.title}</div>
                 <div class="timeline-desc">${item.desc}</div>
+                ${itemWeatherHtml}
                 ${navButton}
                 ${foodTags}
                 ${tipsList}
@@ -269,9 +278,7 @@
           </button>
         `;
         
-        // 获取城市名用于天气和美食
-        const cityNames = ['高邮', '连云港', '日照', '徐州', '徐州'];
-        const currentCity = cityNames[dayIndex] || '';
+        // 天气和美食（currentCity已在上面定义）
         const weatherHtml = renderWeather(dayIndex, currentCity);
         const foodHtml = renderFoodChecklist(currentCity);
         const photoHtml = renderPhotoFrame(`${currentCity} · ${day.theme}`);
@@ -443,7 +450,7 @@
     // 每日家庭小贴士
     const FAMILY_TIPS = [
       { emoji: '🚗', text: '小庆司机首日出征！程老师在副驾指点江山~' },
-      { emoji: '👩‍🦳', text: '都老师负责监督大家按时吃饭，健康饮食！' },
+      { emoji: '👩', text: '都老师负责监督大家按时吃饭，健康饮食！' },
       { emoji: '📸', text: '香香多拍美照，记录一家人的快乐时光！' },
       { emoji: '👩', text: '香香偶尔换手，让小庆休息休息~' },
       { emoji: '👨‍👩‍👧‍👦', text: '小庆一路平安开回家，全家给你点赞！' }
@@ -523,20 +530,62 @@
       `).join('');
     }
     
-    // 渲染天气卡片
+    // 渲染天气卡片（显示对应日期的预报）
     function renderWeather(dayIndex, cityName) {
-      if (!window.WEATHER_DATA || !WEATHER_DATA[cityName]) return '';
-      const w = WEATHER_DATA[cityName];
+      const dateStr = WeatherAPI ? WeatherAPI.TRIP_DATES[dayIndex] : null;
+      const w = dateStr && window.WeatherAPI ? WeatherAPI.getForecastByDay(cityName, dayIndex) : 
+                (window.WEATHER_DATA && WEATHER_DATA[cityName] ? WEATHER_DATA[cityName] : null);
+      if (!w) return '';
+      
+      const isForecast = w.date !== undefined;
+      const forecastBadge = isForecast ? `<span class="weather-forecast-badge">${w.date} 预报</span>` : '';
+      
+      // 获取额外数据
+      const raw = w.raw || {};
+      const uvIndex = raw.uvIndex ? `UV ${raw.uvIndex}` : '';
+      
       return `
-        <div class="weather-card">
-          <div class="weather-icon">${w.icon}</div>
-          <div class="weather-info">
-            <div class="weather-temp">${cityName} · ${w.temp}</div>
-            <div class="weather-mood">${w.mood}</div>
-            <div class="weather-clothes">👔 建议: ${w.clothes}</div>
+        <div class="weather-card" data-city="${cityName}" data-day="${dayIndex}">
+          <div class="weather-card-main">
+            <div class="weather-icon-big">${w.icon}</div>
+            <div class="weather-main-info">
+              <div class="weather-city-name">${cityName} ${forecastBadge}</div>
+              <div class="weather-temp-big">${w.temp}</div>
+              <div class="weather-desc">${w.mood}</div>
+            </div>
           </div>
+          <div class="weather-meta-row">
+            <div class="weather-meta-item">${w.weather || ''}</div>
+            ${uvIndex ? `<div class="weather-meta-item">☀️ ${uvIndex}</div>` : ''}
+          </div>
+          <div class="weather-clothes-tag">👔 ${w.clothes}</div>
         </div>
       `;
+    }
+    
+    // 刷新单个城市天气
+    async function refreshCityWeather(cityName, btn) {
+      if (!window.WeatherAPI) return;
+      btn.classList.add('spinning');
+      try {
+        await WeatherAPI.fetchLive(cityName);
+        await WeatherAPI.refreshAll();
+        // 重新渲染所有天气卡片
+        document.querySelectorAll('.weather-card').forEach(card => {
+          const city = card.dataset.city;
+          if (city) {
+            const dayIndex = ['高邮','连云港','日照','徐州'].indexOf(city);
+            if (dayIndex >= 0) {
+              const newHtml = renderWeather(dayIndex, city);
+              card.outerHTML = newHtml;
+            }
+          }
+        });
+      } catch (err) {
+        console.warn('刷新天气失败:', err);
+      } finally {
+        btn.classList.remove('spinning');
+      }
     }
     
     // 渲染美食打卡
@@ -722,10 +771,28 @@
       input.value = '';
     }
     
-    // 渲染天气预报员
+    // 渲染天气预报员（显示5天预报概览）
     function renderWeatherNews() {
       const container = document.getElementById('weather-news-section');
       if (!container) return;
+      
+      const cities = ['高邮', '连云港', '日照', '徐州'];
+      let forecastCards = '';
+      
+      cities.forEach(city => {
+        // 显示该城市Day1的预报作为代表
+        const w = window.WeatherAPI ? WeatherAPI.getForecastByDay(city, 0) : null;
+        if (w) {
+          forecastCards += `
+            <div class="weather-news-city">
+              <div class="weather-news-city-name">${city}</div>
+              <div class="weather-news-city-icon">${w.icon}</div>
+              <div class="weather-news-city-temp">${w.temp}</div>
+              <div class="weather-news-city-desc">${w.weather}</div>
+            </div>
+          `;
+        }
+      });
       
       container.innerHTML = `
         <div class="weather-news">
@@ -734,16 +801,17 @@
             <div class="weather-news-title">📺 五一旅行天气预报</div>
           </div>
           <div class="weather-news-anchor">
-            <div class="weather-news-avatar">👨‍🦳</div>
+            <div class="weather-news-avatar">👨‍🏫</div>
             <div class="weather-news-content">
               <div class="weather-news-name">程老师</div>
               <div class="weather-news-role">首席气象播报员</div>
             </div>
           </div>
-          <div class="weather-news-forecast">
-            📍 高邮：晴 18-26°C · 连云港：多云 16-24°C<br>
-            📍 日照：晴 17-25°C · 徐州：晴 19-28°C<br>
-            <small>🎤 "我是程老师，接下来为大家播报五一期间天气..."</small>
+          <div class="weather-news-grid">
+            ${forecastCards}
+          </div>
+          <div class="weather-news-footer">
+            <small>🎤 "5月1日-5日预报已就绪，每天行程显示对应日期天气~"</small>
           </div>
         </div>
       `;
@@ -779,11 +847,11 @@
           </div>
           <div class="travel-contract-signatures">
             <div class="travel-contract-sig">
-              <div class="travel-contract-sig-emoji">👨‍🦳</div>
+              <div class="travel-contract-sig-emoji">👨‍🏫</div>
               <div class="travel-contract-sig-name">程老师</div>
             </div>
             <div class="travel-contract-sig">
-              <div class="travel-contract-sig-emoji">👩‍🦳</div>
+              <div class="travel-contract-sig-emoji">👩</div>
               <div class="travel-contract-sig-name">都老师</div>
             </div>
             <div class="travel-contract-sig">
@@ -1062,11 +1130,10 @@
       `;
     }
     
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       renderFamily();
       renderTimelineHorizontal();
       renderSunTimes();
-      renderWeatherNews();
       renderPhotoPoses();
       renderDialect();
       renderFoodRadar();
@@ -1075,10 +1142,24 @@
       renderContract();
       renderGiftList();
       initDanmu();
+      
+      // 先加载天气预报，再渲染行程（确保天气卡片显示预报数据）
+      if (window.WeatherAPI) {
+        try {
+          await WeatherAPI.loadForecasts();
+          console.log('✅ 五一预报加载完成');
+        } catch (err) {
+          console.warn('预报加载失败:', err);
+        }
+      }
+      
+      // 渲染行程（天气卡片会显示预报数据）
       renderTrip();
       addFamilyTips();
       renderTips();
+      renderWeatherNews();
       initBackToTop();
+      
       // 延迟加载地图，确保DOM就绪
       setTimeout(loadAmapScript, 100);
       

@@ -4,10 +4,10 @@
 
 const FAMILY = {
   members: [
-    { name: "程老师", role: "爸爸", age: 59, emoji: "👨", color: "#4a90d9", desc: "资深领航员", voice: "安全第一，慢慢开！" },
+    { name: "程老师", role: "爸爸", age: 59, emoji: "👨‍🏫", color: "#4a90d9", desc: "资深领航员", voice: "安全第一，慢慢开！" },
     { name: "都老师", role: "妈妈", age: 56, emoji: "👩", color: "#e85d75", desc: "美食鉴赏家", voice: "该吃饭啦，别饿着！" },
-    { name: "小庆", role: "儿子", age: null, emoji: "👨", color: "#27ae60", desc: "首席司机🚗", voice: "放心，我开车稳得很！" },
-    { name: "香香", role: "儿媳", age: null, emoji: "👩", color: "#f39c12", desc: "替补司机📸", voice: "这里好美，快帮我拍照！" }
+    { name: "小庆", role: "儿子", age: null, emoji: "🤓", color: "#27ae60", desc: "首席司机🚗", voice: "放心，我开车稳得很！" },
+    { name: "香香", role: "儿媳", age: null, emoji: "🙋‍♀️", color: "#f39c12", desc: "替补司机📸", voice: "这里好美，快帮我拍照！" }
   ]
 };
 
@@ -29,11 +29,11 @@ const FOOD_CHECKLIST = {
 
 // 家庭群聊消息
 const CHAT_MESSAGES = [
-  { sender: "都老师", emoji: "👩‍🦳", text: "早上好！今天几点出发呀？", time: "07:00" },
+  { sender: "都老师", emoji: "👩", text: "早上好！今天几点出发呀？", time: "07:00" },
   { sender: "小庆", emoji: "👨", text: "程老师，导航已就绪，准备出发！", time: "07:30" },
-  { sender: "程老师", emoji: "👨‍🦳", text: "好，我检查一下车况", time: "07:35" },
+  { sender: "程老师", emoji: "👨‍🏫", text: "好，我检查一下车况", time: "07:35" },
   { sender: "香香", emoji: "👩", text: "我带了零食和充电宝~", time: "07:40" },
-  { sender: "都老师", emoji: "👩‍🦳", text: "记得给我拍美照哦", time: "07:45" },
+  { sender: "都老师", emoji: "👩", text: "记得给我拍美照哦", time: "07:45" },
   { sender: "小庆", emoji: "👨", text: "出发！🚗💨", time: "08:00" }
 ];
 
@@ -111,7 +111,7 @@ const SUN_TIMES = {
 
 const TRIP_DATA = {
   title: "🚗 小庆一家五一自驾游",
-  subtitle: "程老师👨‍🦳 都老师👩‍🦳 小庆👨 香香👩 · 高邮→连云港→日照→徐州",
+  subtitle: "程老师👨‍🏫 都老师👩 小庆🤓 香香🙋‍♀️ · 高邮→连云港→日照→徐州",
   startPoint: {
     name: "华地伟星龙川时代",
     address: "安徽省合肥市肥西县",
