@@ -904,15 +904,24 @@
   color: var(--color-text-light);
 }
 
-/* 天气预报网格 */
+/* 天气预报网格 - 横向滑动 */
 .weather-news-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
   gap: 10px;
   margin-bottom: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.weather-news-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .weather-news-city {
+  flex-shrink: 0;
+  width: 85px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -931,17 +940,17 @@
 }
 
 .weather-news-city-icon {
-  font-size: 32px;
+  font-size: 28px;
   line-height: 1;
 }
 
 .weather-news-city-temp {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .weather-news-city-desc {
-  font-size: 11px;
+  font-size: 10px;
   opacity: 0.85;
   line-height: 1.3;
 }
@@ -954,13 +963,6 @@
 
 .weather-news-footer small {
   color: var(--color-text-light);
-}
-
-/* 响应式：小屏幕改为2列 */
-@media (max-width: 400px) {
-  .weather-news-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 /* 天气加载动画 */
