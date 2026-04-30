@@ -305,6 +305,11 @@
             <div class="hotel-label">🏨 住宿</div>
             <div class="hotel-name">${day.hotel.name}</div>
             <div class="hotel-tip">${day.hotel.area} · ${day.hotel.tip}</div>
+            ${day.hotel.nav ? `
+              <button class="nav-btn-inline" onclick="showNavModal({name:'${day.hotel.nav.name.replace(/'/g, "\\'")}',lnglat:[${day.hotel.nav.lnglat}],address:'${day.hotel.nav.address.replace(/'/g, "\\'")}'})">
+                <span>📍</span> 导航到酒店
+              </button>
+            ` : ''}
           </div>
         ` : '';
         
