@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/extras.css">
   <link rel="stylesheet" href="css/features.css">
+  <link rel="stylesheet" href="css/dice.css">
   <!-- 高德地图 JS API -->
   <script src="https://webapi.amap.com/maps?v=1.4.15&key=6a00aea5607e3e7bec6c21b35b2aecbb"></script>
 </head>
@@ -118,6 +119,11 @@
   <!-- 14. 背景音乐按钮 -->
   <button class="music-btn" id="musicBtn" onclick="toggleMusic()" title="背景音乐">
     🎵
+  </button>
+
+  <!-- 摇骰子按钮 -->
+  <button class="dice-btn" id="diceBtn" onclick="showDiceModal()" title="摇骰子决定谁付钱">
+    🎲
   </button>
 
   <!-- 10. 到达动画容器 -->
@@ -1307,6 +1313,162 @@
       
       // 后端已固定配置，无需手动设置
     });
+    
+    // ============================================
+    // 摇骰子功能
+    // ============================================
+    
+    const DICE_MEMBERS = [
+      { name: '程老师', emoji: '👨' },
+      { name: '都老师', emoji: '👩' },
+      { name: '小庆', emoji: '👨' },
+      { name: '香香', emoji: '👩' }
+    ];
+    
+    let diceHistory = [];
+    
+    function showDiceModal() {
+      // 创建弹窗
+      const modal = document.createElement('div');
+      modal.className = 'dice-modal';
+      modal.id = 'diceModal';
+      modal.innerHTML = `
+        <div class="dice-modal-content">
+          <div class="dice-modal-title">🎲 摇骰子决定谁付钱</div>
+          
+          <div class="dice-members" id="diceMembers">
+            ${DICE_MEMBERS.map((m, i) => `
+              <div class="dice-member" data-index="${i}">
+                <div class="dice-member-emoji">${m.emoji}</div>
+                <div class="dice-member-name">${m.name}</div>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div class="dice-area">
+            <div class="dice" id="dice">🎲</div>
+          </div>
+          
+          <div class="dice-result" id="diceResult">
+            <div class="dice-result-text">点击摇骰子</div>
+          </div>
+          
+          <div class="dice-actions">
+            <button class="dice-action-btn cancel" onclick="closeDiceModal()">关闭</button>
+            <button class="dice-action-btn roll" onclick="rollDice()">摇骰子</button>
+          </div>
+          
+          <div class="dice-history" id="diceHistory" style="display: none;">
+            <div class="dice-history-title">📋 历史记录</div>
+            <div id="diceHistoryList"></div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // 点击背景关闭
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeDiceModal();
+      });
+      
+      // 显示动画
+      requestAnimationFrame(() => {
+        modal.classList.add('active');
+      });
+    }
+    
+    function closeDiceModal() {
+      const modal = document.getElementById('diceModal');
+      if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.remove(), 300);
+      }
+    }
+    
+    function rollDice() {
+      const dice = document.getElementById('dice');
+      const resultDiv = document.getElementById('diceResult');
+      const members = document.querySelectorAll('.dice-member');
+      
+      // 禁用按钮
+      const rollBtn = document.querySelector('.dice-action-btn.roll');
+      rollBtn.disabled = true;
+      rollBtn.textContent = '摇奖中...';
+      
+      // 开始动画
+      dice.classList.add('rolling');
+      
+      let rollCount = 0;
+      const maxRolls = 20;
+      let currentIndex = 0;
+      
+      const rollInterval = setInterval(() => {
+        // 随机显示一个成员
+        members.forEach(m => m.classList.remove('active'));
+        currentIndex = Math.floor(Math.random() * DICE_MEMBERS.length);
+        members[currentIndex].classList.add('active');
+        
+        // 骰子数字变化
+        dice.textContent = Math.floor(Math.random() * 6) + 1;
+        
+        rollCount++;
+        
+        if (rollCount >= maxRolls) {
+          clearInterval(rollInterval);
+          finishRoll(currentIndex);
+        }
+      }, 100);
+    }
+    
+    function finishRoll(winnerIndex) {
+      const dice = document.getElementById('dice');
+      const resultDiv = document.getElementById('diceResult');
+      const members = document.querySelectorAll('.dice-member');
+      const rollBtn = document.querySelector('.dice-action-btn.roll');
+      
+      // 停止动画
+      dice.classList.remove('rolling');
+      
+      // 显示最终结果
+      const winner = DICE_MEMBERS[winnerIndex];
+      dice.textContent = '✨';
+      
+      members.forEach((m, i) => {
+        m.classList.remove('active');
+        if (i === winnerIndex) m.classList.add('active');
+      });
+      
+      resultDiv.innerHTML = `
+        <div class="dice-result-text">🎉 恭喜</div>
+        <div class="dice-result-winner">${winner.emoji} ${winner.name} 付钱！</div>
+      `;
+      
+      // 添加到历史
+      diceHistory.unshift({
+        name: winner.name,
+        emoji: winner.emoji,
+        time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+      });
+      
+      updateDiceHistory();
+      
+      // 恢复按钮
+      rollBtn.disabled = false;
+      rollBtn.textContent = '再摇一次';
+    }
+    
+    function updateDiceHistory() {
+      const historyDiv = document.getElementById('diceHistory');
+      const historyList = document.getElementById('diceHistoryList');
+      
+      if (diceHistory.length > 0) {
+        historyDiv.style.display = 'block';
+        historyList.innerHTML = diceHistory.slice(0, 5).map(h => `
+          <div class="dice-history-item">${h.time} · ${h.emoji} ${h.name} 付钱</div>
+        `).join('');
+      }
+    }
   </script>
   
   <!-- 留言板功能已由 message-board.js 提供 -->

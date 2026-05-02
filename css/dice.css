@@ -1,0 +1,226 @@
+/* ============================================
+   摇骰子决定谁付钱
+   ============================================ */
+
+/* 骰子按钮 */
+.dice-btn {
+  position: fixed;
+  bottom: 200px;
+  right: 16px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  color: white;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+.dice-btn:hover {
+  transform: scale(1.1) rotate(10deg);
+}
+
+.dice-btn:active {
+  transform: scale(0.95);
+}
+
+/* 骰子弹窗 */
+.dice-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.dice-modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.dice-modal-content {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 90%;
+  max-width: 320px;
+  text-align: center;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.dice-modal.active .dice-modal-content {
+  transform: scale(1);
+}
+
+.dice-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--color-text);
+}
+
+/* 骰子动画区域 */
+.dice-area {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+/* 骰子 */
+.dice {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: white;
+  box-shadow: 0 8px 20px rgba(238, 90, 90, 0.3);
+  transition: all 0.1s;
+}
+
+.dice.rolling {
+  animation: diceRoll 0.1s linear infinite;
+}
+
+@keyframes diceRoll {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(1.1); }
+  50% { transform: rotate(180deg) scale(1); }
+  75% { transform: rotate(270deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+/* 结果展示 */
+.dice-result {
+  margin-bottom: 16px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.dice-result-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.dice-result-winner {
+  font-size: 24px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 家庭成员选择 */
+.dice-members {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dice-member {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #f8f9fa;
+  transition: all 0.3s;
+}
+
+.dice-member.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  transform: scale(1.1);
+}
+
+.dice-member-emoji {
+  font-size: 28px;
+}
+
+.dice-member-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 按钮 */
+.dice-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.dice-action-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.dice-action-btn.cancel {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.dice-action-btn.roll {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  color: white;
+}
+
+.dice-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 历史记录 */
+.dice-history {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.dice-history-title {
+  font-size: 12px;
+  color: var(--color-text-light);
+  margin-bottom: 8px;
+}
+
+.dice-history-item {
+  font-size: 13px;
+  padding: 4px 0;
+  color: var(--color-text);
+}
